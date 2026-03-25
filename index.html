@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fates App — Your Prophecy Awaits</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Special+Elite&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f0d0b;
+  --paper-mid: #161310;
+  --paper-light: #1e1a15;
+  --ink-cyan: #2af5e0;
+  --ink-cyan-dim: #0d7a71;
+  --ink-cyan-bleed: rgba(42,245,224,0.07);
+  --ink-magenta: #e8203a;
+  --ink-magenta-dim: #6b0f1a;
+  --ink-magenta-bleed: rgba(232,32,58,0.07);
+  --ink-amber: #e8a020;
+  --ink-white: #d8d0c0;
+  --ink-muted: #5a5248;
+  --ink-dark: #2a2420;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink-white);
+  font-family: 'Special Elite', serif;
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* Heavy paper grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+
+/* Scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9001;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px);
+}
+
+/* SVG ink filters */
+svg.filters { position: absolute; width: 0; height: 0; }
+
+/* Animations */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes inkBleed { 0%,100% { text-shadow: 2px 1px 0 rgba(42,245,224,0.25), -1px 0 0 rgba(232,32,58,0.15); } 50% { text-shadow: 3px 2px 0 rgba(42,245,224,0.4), -2px -1px 0 rgba(232,32,58,0.25); } }
+@keyframes flicker  { 0%,100%{opacity:1;} 93%{opacity:1;} 94%{opacity:0.5;} 95%{opacity:1;} 97%{opacity:0.7;} 98%{opacity:1;} }
+@keyframes drip     { 0%{transform:translateY(0) scaleY(1);} 80%{transform:translateY(38px) scaleY(1.4);opacity:1;} 100%{transform:translateY(42px) scaleY(0.3);opacity:0;} }
+
+.reveal { opacity:0; transform:translateY(20px); transition:opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity:1; transform:none; }
+
+/* ══ NAV ══ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 1.2rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, rgba(15,13,11,0.95), transparent);
+}
+.nav-logo {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.1rem;
+  color: var(--ink-cyan);
+  animation: inkBleed 7s ease-in-out infinite;
+  letter-spacing: 0.02em;
+}
+.nav-cta {
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--ink-magenta);
+  background: none;
+  border: 1.5px solid var(--ink-magenta-dim);
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  transform: rotate(-0.5deg);
+}
+.nav-cta:hover { border-color: var(--ink-magenta); color: var(--ink-white); }
+
+/* ══ HERO ══ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 7rem 2rem 5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(232,32,58,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgba(0,0,0,0.5) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.9s ease both;
+  transform: rotate(-0.8deg);
+  display: inline-block;
+}
+
+.hero-title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(4rem, 16vw, 11rem);
+  line-height: 0.88;
+  color: var(--ink-white);
+  animation: fadeUp 0.9s 0.1s ease both, inkBleed 7s 1s ease-in-out infinite;
+  transform: rotate(-1deg);
+  display: inline-block;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.2em;
+  filter: url(#roughen);
+}
+.hero-title .ink { color: var(--ink-cyan); }
+
+.hero-subtitle {
+  font-family: 'Caveat', cursive;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 600;
+  color: var(--ink-magenta);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.9s 0.2s ease both;
+  transform: rotate(0.4deg);
+  display: inline-block;
+}
+
+/* SVG wobbly rule */
+.hero-rule { width: 100%; max-width: 480px; margin: 0 auto 2rem; animation: fadeUp 0.9s 0.25s ease both; }
+
+.hero-tagline {
+  font-size: 1rem;
+  color: var(--ink-white);
+  opacity: 0.65;
+  max-width: 520px;
+  margin: 0 auto 3rem;
+  line-height: 1.9;
+  animation: fadeUp 0.9s 0.3s ease both;
+  font-family: 'Special Elite', serif;
+}
+
+.hero-cta-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  animation: fadeUp 0.9s 0.4s ease both;
+}
+
+.btn-primary {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.1rem;
+  background: var(--ink-magenta);
+  color: var(--paper);
+  border: none;
+  padding: 0.85rem 2.5rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  transform: rotate(-0.5deg);
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  letter-spacing: 0.03em;
+  animation: flicker 9s 2s infinite;
+}
+.btn-primary:hover { background: var(--ink-cyan); transform: rotate(-0.5deg) translateY(-2px); }
+
+.btn-secondary {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color 0.2s;
+  text-transform: uppercase;
+}
+.btn-secondary:hover { color: var(--ink-cyan); }
+
+.hero-note {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.35;
+  animation: fadeUp 1s 1s ease both;
+}
+.scroll-hint span {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--ink-cyan);
+  text-transform: uppercase;
+}
+.scroll-arrow {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, var(--ink-cyan), transparent);
+}
+
+/* ══ SHARED SECTION STYLES ══ */
+.section-wrap { max-width: 860px; margin: 0 auto; padding: 5rem 2rem; }
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+.section-divider-label {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-magenta);
+  white-space: nowrap;
+  transform: rotate(-0.4deg);
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.section-heading {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  color: var(--ink-white);
+  margin-bottom: 0.3em;
+  transform: rotate(-0.4deg);
+  display: inline-block;
+  filter: url(#roughen);
+  animation: inkBleed 8s ease-in-out infinite;
+}
+.section-sub {
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-bottom: 3rem;
+  font-style: italic;
+}
+
+/* ══ HOW IT WORKS ══ */
+.how { background: linear-gradient(to bottom, transparent, rgba(232,32,58,0.04), transparent); }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 3px;
+}
+.step-card {
+  background: var(--paper-mid);
+  padding: 1.75rem 1.5rem;
+  border-top: 2px solid var(--ink-magenta-dim);
+  position: relative;
+  transition: border-top-color 0.3s;
+}
+.step-card:hover { border-top-color: var(--ink-magenta); }
+
+.step-num {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 2.8rem;
+  color: var(--ink-cyan);
+  opacity: 0.2;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  animation: inkBleed 8s ease-in-out infinite;
+}
+.step-title {
+  font-family: 'Caveat', cursive;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink-cyan);
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.05em;
+  transform: rotate(-0.3deg);
+  display: inline-block;
+}
+.step-desc {
+  font-size: 0.9rem;
+  color: var(--ink-white);
+  opacity: 0.7;
+  line-height: 1.8;
+  font-family: 'Special Elite', serif;
+}
+
+/* ══ SAMPLE DECREE CARD ══ */
+.sample { background: linear-gradient(to bottom, transparent, rgba(42,245,224,0.03), transparent); }
+
+.oracle-card {
+  max-width: 580px;
+  margin: 0 auto;
+  background: var(--paper-mid);
+  border: 1.5px solid var(--ink-cyan-dim);
+  border-top: 3px solid var(--ink-magenta);
+  padding: 2.5rem;
+  position: relative;
+  transform: rotate(-0.3deg);
+}
+/* Ink corner marks */
+.oracle-card::before, .oracle-card::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 2px solid var(--ink-cyan-dim);
+}
+.oracle-card::before { bottom: -2px; right: -2px; border-top: none; border-left: none; }
+.oracle-card::after  { top: -2px; left: -2px; border-bottom: none; border-right: none; }
+
+.oracle-week {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.oracle-week::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--ink-muted), transparent); opacity: 0.3; }
+
+.oracle-god {
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-cyan);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.6rem;
+}
+.oracle-question {
+  font-family: 'Special Elite', serif;
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  color: var(--ink-white);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.oracle-choices { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+
+.choice {
+  border: 1px solid rgba(42,245,224,0.15);
+  background: transparent;
+  padding: 0.85rem 1.1rem;
+  font-size: 0.88rem;
+  color: var(--ink-white);
+  opacity: 0.75;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: left;
+  width: 100%;
+  font-family: 'Special Elite', serif;
+  line-height: 1.55;
+}
+.choice:hover { border-color: var(--ink-cyan-dim); opacity: 1; background: var(--ink-cyan-bleed); }
+.choice.selected { border-color: var(--ink-cyan); background: var(--ink-cyan-bleed); opacity: 1; color: var(--ink-cyan); }
+
+.choice-letter {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 13px;
+  color: var(--ink-magenta);
+  min-width: 16px;
+  flex-shrink: 0;
+}
+.oracle-deadline {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-align: right;
+  font-style: italic;
+}
+
+/* ══ GODS ROSTER ══ */
+.gods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 3px;
+}
+.god-card {
+  background: var(--paper-mid);
+  padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  border-left: 2px solid transparent;
+  transition: border-color 0.3s, background 0.3s;
+}
+.god-card::before {
+  content: var(--symbol);
+  position: absolute;
+  top: -8px; right: 8px;
+  font-size: 5rem;
+  opacity: 0.05;
+  line-height: 1;
+  pointer-events: none;
+  filter: blur(1px);
+  transform: rotate(8deg);
+}
+.god-card:hover { border-left-color: var(--ink-cyan); background: var(--paper-light); }
+
+.god-domain {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.god-name {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.6rem;
+  color: var(--ink-white);
+  margin-bottom: 0.1em;
+  line-height: 1;
+  animation: inkBleed 9s ease-in-out infinite;
+}
+.god-alias {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-cyan-dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.9rem;
+  font-style: italic;
+}
+.god-desc {
+  font-size: 0.85rem;
+  color: var(--ink-white);
+  opacity: 0.65;
+  line-height: 1.75;
+  font-family: 'Special Elite', serif;
+}
+.god-locked {
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted);
+  border: 1px solid var(--ink-muted);
+  padding: 2px 8px;
+  margin-top: 0.8rem;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+/* ══ PRICING ══ */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 3px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.price-card {
+  background: var(--paper-mid);
+  padding: 2.5rem 2rem;
+  border-top: 2px solid var(--ink-muted);
+  position: relative;
+}
+.price-card.featured {
+  border-top-color: var(--ink-magenta);
+  background: var(--paper-light);
+}
+.price-badge {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  background: var(--ink-magenta);
+  color: var(--paper);
+  padding: 3px 12px;
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-0.5deg);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.price-tier {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.price-amount {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 3.2rem;
+  color: var(--ink-white);
+  line-height: 1;
+  margin-bottom: 0.15em;
+  animation: inkBleed 8s ease-in-out infinite;
+  filter: url(#roughen);
+}
+.price-period {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-muted);
+  margin-bottom: 2rem;
+}
+.price-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 2rem;
+}
+.price-features li {
+  font-size: 0.875rem;
+  color: var(--ink-white);
+  opacity: 0.78;
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  line-height: 1.5;
+  font-family: 'Special Elite', serif;
+}
+.price-features li::before { content: '—'; color: var(--ink-cyan); opacity: 0.7; flex-shrink: 0; }
+.price-features li.locked { opacity: 0.3; }
+.price-features li.locked::before { content: '✕'; font-size: 10px; color: var(--ink-muted); }
+
+/* ══ FOUNDING ══ */
+.founding { padding: 4rem 2rem 6rem; }
+.founding-box {
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--paper-mid);
+  border: 1.5px solid var(--ink-cyan-dim);
+  border-top: 3px solid var(--ink-magenta);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  position: relative;
+  transform: rotate(-0.25deg);
+}
+.founding-eyebrow {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-magenta);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.founding-title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(1.6rem, 5vw, 2.5rem);
+  color: var(--ink-white);
+  margin-bottom: 1rem;
+  transform: rotate(-0.4deg);
+  display: inline-block;
+  animation: inkBleed 8s ease-in-out infinite;
+  filter: url(#roughen);
+}
+.founding-desc {
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--ink-white);
+  opacity: 0.65;
+  margin-bottom: 2rem;
+  line-height: 1.85;
+  font-family: 'Special Elite', serif;
+}
+.email-form {
+  display: flex;
+  max-width: 400px;
+  margin: 0 auto 1rem;
+}
+.email-input {
+  flex: 1;
+  background: var(--paper);
+  border: 1.5px solid var(--ink-muted);
+  border-right: none;
+  padding: 0.85rem 1.1rem;
+  color: var(--ink-white);
+  font-family: 'Special Elite', serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.email-input::placeholder { color: var(--ink-muted); font-style: italic; }
+.email-input:focus { border-color: var(--ink-cyan-dim); }
+.email-btn {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: var(--ink-magenta);
+  color: var(--paper);
+  border: none;
+  padding: 0.85rem 1.4rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.email-btn:hover { background: var(--ink-cyan); }
+.founding-note {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+/* ══ FOOTER ══ */
+footer {
+  padding: 3rem 2rem;
+  border-top: 1px solid rgba(42,245,224,0.08);
+  text-align: center;
+}
+.footer-logo {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.3rem;
+  color: var(--ink-cyan);
+  margin-bottom: 0.4rem;
+  animation: inkBleed 8s ease-in-out infinite;
+  transform: rotate(-0.3deg);
+  display: inline-block;
+}
+.footer-tagline {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-muted);
+  margin-bottom: 1.5rem;
+}
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.footer-links a {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--ink-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--ink-cyan); }
+
+/* Ink drip decoration */
+.ink-drip {
+  position: relative;
+  display: inline-block;
+}
+.ink-drip::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 30%;
+  width: 3px;
+  height: 0;
+  background: var(--ink-magenta);
+  border-radius: 0 0 3px 3px;
+  animation: drip 4s 3s ease-in infinite;
+}
+
+@media (max-width: 600px) {
+  .email-form { flex-direction: column; }
+  .email-input { border-right: 1.5px solid var(--ink-muted); border-bottom: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- SVG filters -->
+<svg class="filters" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="roughen" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">The Fates App</div>
+  <button class="nav-cta" onclick="document.querySelector('.founding').scrollIntoView({behavior:'smooth'})">Claim Your Fate</button>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <p class="hero-eyebrow">The gods never left. They simply stopped explaining themselves.</p>
+
+  <h1 class="hero-title ink-drip">The<br><span class="ink">Fates</span><br>App</h1>
+
+  <p class="hero-subtitle">Prediction Game · Modern Mythology</p>
+
+  <svg class="hero-rule" viewBox="0 0 480 12" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M2,6 C40,4 80,8 120,5 C180,2 230,9 290,6 C340,3 390,8 450,5 C462,4 474,7 478,6"
+      stroke="#e8203a" stroke-width="1.8" fill="none" stroke-linecap="round" filter="url(#roughen)" opacity="0.6"/>
+    <path d="M2,9 C60,8 120,11 180,9 C240,7 300,11 360,9 C410,7 450,10 478,9"
+      stroke="#2af5e0" stroke-width="0.8" fill="none" stroke-linecap="round" filter="url(#roughen)" opacity="0.35"/>
+  </svg>
+
+  <p class="hero-tagline">Zeus still throws thunderbolts. Aphrodite still starts wars. Dionysus has never stopped the party. Predict what the gods do next — before the Fates decide for you.</p>
+
+  <div class="hero-cta-group">
+    <button class="btn-primary" onclick="document.querySelector('.founding').scrollIntoView({behavior:'smooth'})">Claim Your Prophecy</button>
+    <button class="btn-secondary" onclick="document.querySelector('#how-section').scrollIntoView({behavior:'smooth'})">How does it work?</button>
+    <p class="hero-note">Free to play &nbsp;·&nbsp; Founding Oracles locked at $3.99/mo forever</p>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Descend</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══ -->
+<section class="how" id="how-section">
+  <div class="section-wrap">
+    <div class="section-divider reveal">
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+      <span class="section-divider-label">The Ritual</span>
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+    </div>
+    <h2 class="section-heading reveal">How The Fates Work</h2>
+    <p class="section-sub reveal">It's not gambling. It's divine intelligence.</p>
+    <div class="steps">
+      <div class="step-card reveal">
+        <div class="step-num">I</div>
+        <div class="step-title">The Oracle Speaks</div>
+        <p class="step-desc">Each week, new Divine Decrees appear. Real-world events reframed as acts of gods — their ancient natures bleeding through their modern disguises.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">II</div>
+        <div class="step-title">Make Your Prophecy</div>
+        <p class="step-desc">Choose your outcome before the deadline. Know your myths. Know your gods. Your wisdom — or your hubris — is on the line.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">III</div>
+        <div class="step-title">Fate Resolves</div>
+        <p class="step-desc">When the real world delivers its verdict, the outcome is narrated as myth. Correct oracles earn Divine Favour and climb the Pantheon.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">IV</div>
+        <div class="step-title">Ascend</div>
+        <p class="step-desc">Rise from Mortal → Demigod → Hero → Oracle → Chosen of the Gods. Seasonal resets keep the divine order from getting comfortable.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SAMPLE DECREE ══ -->
+<section class="sample">
+  <div class="section-wrap">
+    <div class="section-divider reveal">
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+      <span class="section-divider-label">A Taste of Fate</span>
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+    </div>
+    <h2 class="section-heading reveal">This Week's Divine Decree</h2>
+    <p class="section-sub reveal">A sample of what awaits you inside.</p>
+    <div class="oracle-card reveal">
+      <div class="oracle-week">Week XII · The Age of Disruption</div>
+      <div class="oracle-god">⚡ Zeus · The Thunderer · Lord of the Sky</div>
+      <div class="oracle-question">"The collective known as Typhon has breached OlympusCloud's servers. Three million mortal records hang in the dark. The Father of Gods — who does not fear, who does not negotiate, who does not forget — must act before dawn. What does Zeus do?"</div>
+      <div class="oracle-choices">
+        <button class="choice" onclick="selectChoice(this)"><span class="choice-letter">A</span> Unleashes the full force of every legal, financial and technical weapon at his disposal. Scorched earth. An example that outlasts the crisis.</button>
+        <button class="choice" onclick="selectChoice(this)"><span class="choice-letter">B</span> Goes silent. No statement. The counter-strike happens in the dark, without witnesses.</button>
+        <button class="choice" onclick="selectChoice(this)"><span class="choice-letter">C</span> Negotiates, quietly, through intermediaries. Pride be damned — mortals must not see the breach.</button>
+        <button class="choice" onclick="selectChoice(this)"><span class="choice-letter">D</span> Makes it someone else's fault. Publicly. At length. The storm redirected.</button>
+      </div>
+      <div class="oracle-deadline">⏳ Decree closes in 2 days, 14 hours</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ GODS ROSTER ══ -->
+<section class="gods">
+  <div class="section-wrap">
+    <div class="section-divider reveal">
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+      <span class="section-divider-label">The Pantheon</span>
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+    </div>
+    <h2 class="section-heading reveal">Meet the Gods</h2>
+    <p class="section-sub reveal">Eight deities. Ancient natures. Modern disguises.</p>
+    <div class="gods-grid">
+      <div class="god-card reveal" style="--symbol:'⚡'">
+        <div class="god-domain">Free</div>
+        <div class="god-name">Zeus</div>
+        <div class="god-alias">The Thunderer</div>
+        <p class="god-desc">Sovereignty without mercy and mercy without consistency. He does not rule because he is just. He rules because he won, and has never distinguished between the two.</p>
+      </div>
+      <div class="god-card reveal" style="--symbol:'🌹'">
+        <div class="god-domain">Free</div>
+        <div class="god-name">Aphrodite</div>
+        <div class="god-alias">The Irresistible</div>
+        <p class="god-desc">She gave Paris the most beautiful woman in the world and considered herself blameless for the war. She keeps her promises exactly. The consequences are someone else's problem.</p>
+      </div>
+      <div class="god-card reveal" style="--symbol:'⚔️'">
+        <div class="god-domain">Free</div>
+        <div class="god-name">Ares</div>
+        <div class="god-alias">The Insatiable</div>
+        <p class="god-desc">Not the god of just war or heroic war. The god of war as a physical state — the blood, the breaking, the part of conflict that cannot be made noble. He does not start things. He sustains them.</p>
+      </div>
+      <div class="god-card reveal" style="--symbol:'🪶'">
+        <div class="god-domain"><span style="color:var(--ink-amber)">Subscriber</span></div>
+        <div class="god-name">Hermes</div>
+        <div class="god-alias">The Liminal</div>
+        <p class="god-desc">On the day he was born he stole Apollo's cattle, invented the lyre, and talked his way out of punishment. He was hours old. He has not slowed down.</p>
+        <div class="god-locked">Unlock with Oracle Tier</div>
+      </div>
+      <div class="god-card reveal" style="--symbol:'🦉'">
+        <div class="god-domain"><span style="color:var(--ink-amber)">Subscriber</span></div>
+        <div class="god-name">Athena</div>
+        <div class="god-alias">The Undefeated</div>
+        <p class="god-desc">Born fully formed, fully armed, from the head of the god who feared what she would become. She has been proving him right ever since.</p>
+        <div class="god-locked">Unlock with Oracle Tier</div>
+      </div>
+      <div class="god-card reveal" style="--symbol:'👑'">
+        <div class="god-domain"><span style="color:var(--ink-amber)">Subscriber</span></div>
+        <div class="god-name">Hera</div>
+        <div class="god-alias">The Bound Queen</div>
+        <p class="god-desc">She is not defined by what was done to her. She is defined by the precision with which she has not yet responded. She is meticulous about timing.</p>
+        <div class="god-locked">Unlock with Oracle Tier</div>
+      </div>
+      <div class="god-card reveal" style="--symbol:'🍷'">
+        <div class="god-domain"><span style="color:var(--ink-amber)">Subscriber</span></div>
+        <div class="god-name">Dionysus</div>
+        <div class="god-alias">The Twice-Born</div>
+        <p class="god-desc">He does not destroy order. He reveals that the order was always provisional. He was the last god admitted to Olympus. He has never forgotten what it cost him to be believed.</p>
+        <div class="god-locked">Unlock with Oracle Tier</div>
+      </div>
+      <div class="god-card reveal" style="--symbol:'☀️'">
+        <div class="god-domain"><span style="color:var(--ink-amber)">Subscriber</span></div>
+        <div class="god-name">Apollo</div>
+        <div class="god-alias">The Bright One</div>
+        <p class="god-desc">His prophecies are always true. They are never clear until it is too late to use them. He has decided this is the listener's fault.</p>
+        <div class="god-locked">Unlock with Oracle Tier</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ══ -->
+<section class="pricing" style="padding: 5rem 0;">
+  <div class="section-wrap">
+    <div class="section-divider reveal">
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+      <span class="section-divider-label">Choose Your Fate</span>
+      <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+    </div>
+    <h2 class="section-heading reveal">Oracle Tiers</h2>
+    <p class="section-sub reveal">The gods are generous. To a point.</p>
+    <div class="pricing-grid">
+      <div class="price-card reveal">
+        <div class="price-tier">Mortal</div>
+        <div class="price-amount">Free</div>
+        <div class="price-period">forever, as the Fates allow</div>
+        <ul class="price-features">
+          <li>3 predictions per week</li>
+          <li>Zeus, Aphrodite &amp; Ares unlocked</li>
+          <li>Global Pantheon leaderboard</li>
+          <li>Basic title progression</li>
+          <li class="locked">Private leagues with friends</li>
+          <li class="locked">All 8 gods + new arrivals</li>
+          <li class="locked">Weekly Oracle Insights (AI)</li>
+          <li class="locked">Exclusive lore drops</li>
+        </ul>
+        <button class="btn-primary" style="width:100%">Enter as Mortal</button>
+      </div>
+      <div class="price-card featured reveal">
+        <div class="price-badge">Most Chosen</div>
+        <div class="price-tier">Oracle</div>
+        <div class="price-amount">$6.99</div>
+        <div class="price-period">AUD per month · cancel anytime</div>
+        <ul class="price-features">
+          <li>Unlimited predictions</li>
+          <li>All 8 gods unlocked — forever</li>
+          <li>Private leagues with friends</li>
+          <li>Weekly Oracle Insights (AI)</li>
+          <li>Exclusive lore drops &amp; story arcs</li>
+          <li>Seasonal cosmetic rewards</li>
+          <li>Priority fate resolution alerts</li>
+          <li>Inner Sanctum Discord access</li>
+        </ul>
+        <button class="btn-primary" style="width:100%">Ascend to Oracle</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOUNDING ══ -->
+<section class="founding">
+  <div class="founding-box reveal">
+    <div class="founding-eyebrow">⚡ Limited · First 100 Oracles Only</div>
+    <h2 class="founding-title">Become a Founding Oracle</h2>
+    <p class="founding-desc">The first 100 mortals to join are granted a gift even the gods envy — Oracle tier locked at $3.99/month. Forever. Even when we raise prices. The Fates have spoken.</p>
+    <div class="email-form">
+      <input class="email-input" type="email" placeholder="your@email.com" id="emailInput">
+      <button class="email-btn" onclick="handleSignup()">Claim My Fate</button>
+    </div>
+    <p class="founding-note" id="signup-msg">No spam. Only fate. Unsubscribe anytime (though the gods will judge you).</p>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-logo">The Fates App</div>
+  <p class="footer-tagline">Amor Fati — love your fate, even when it's chaos</p>
+  <div class="footer-links">
+    <a href="#">About</a>
+    <a href="#">The Gods</a>
+    <a href="#">How It Works</a>
+    <a href="#">Privacy</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 70);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(el => obs.observe(el));
+
+  // Choice selection
+  function selectChoice(btn) {
+    btn.closest('.oracle-choices').querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  // Email signup
+  function handleSignup() {
+    const email = document.getElementById('emailInput').value;
+    const msg = document.getElementById('signup-msg');
+    if (!email || !email.includes('@')) {
+      msg.textContent = 'The gods require a valid email address.';
+      msg.style.color = 'var(--ink-magenta)';
+      return;
+    }
+    msg.textContent = '✦ Your fate is sealed. The Fates will be in touch. ✦';
+    msg.style.color = 'var(--ink-cyan)';
+    document.getElementById('emailInput').value = '';
+  }
+</script>
+</body>
+</html>

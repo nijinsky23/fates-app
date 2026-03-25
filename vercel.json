@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/profiles", "dest": "/profiles.html" },
+    { "src": "/decrees", "dest": "/decrees.html" },
+    { "src": "/season-one", "dest": "/season-one.html" }
+  ]
+}

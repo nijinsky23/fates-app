@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fates App — Divine Decrees</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Special+Elite&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f0d0b;
+  --paper-mid: #161310;
+  --paper-light: #1e1a15;
+  --ink-cyan: #2af5e0;
+  --ink-cyan-dim: #0d7a71;
+  --ink-cyan-bleed: rgba(42,245,224,0.07);
+  --ink-magenta: #e8203a;
+  --ink-magenta-dim: #6b0f1a;
+  --ink-magenta-bleed: rgba(232,32,58,0.07);
+  --ink-amber: #e8a020;
+  --ink-amber-bleed: rgba(232,160,32,0.1);
+  --ink-white: #d8d0c0;
+  --ink-muted: #5a5248;
+  --ink-dark: #2a2420;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink-white);
+  font-family: 'Special Elite', serif;
+  font-size: 16px;
+  line-height: 1.8;
+  min-height: 100vh;
+}
+
+/* Paper grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+
+/* Scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9001;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px);
+}
+
+svg.filters { position: absolute; width: 0; height: 0; }
+
+/* Animations */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes inkBleed { 0%,100% { text-shadow: 2px 1px 0 rgba(42,245,224,0.2), -1px 0 0 rgba(232,32,58,0.12); } 50% { text-shadow: 3px 2px 0 rgba(42,245,224,0.35), -2px -1px 0 rgba(232,32,58,0.22); } }
+@keyframes flicker  { 0%,100%{opacity:1;} 93%{opacity:1;} 94%{opacity:0.5;} 95%{opacity:1;} 98%{opacity:0.75;} 99%{opacity:1;} }
+@keyframes pulse    { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+@keyframes cardIn   { from { opacity:0; transform:translateY(28px) rotate(var(--tilt)); } to { opacity:1; transform:translateY(0) rotate(var(--tilt)); } }
+@keyframes chosen   { 0%{transform:scale(1);} 40%{transform:scale(1.03);} 100%{transform:scale(1);} }
+@keyframes inkDrip  { 0%{height:0;opacity:1;} 80%{height:22px;opacity:0.8;} 100%{height:26px;opacity:0;} }
+@keyframes timerWarn { 0%,100%{color:var(--ink-amber);} 50%{color:var(--ink-magenta);} }
+
+/* ══ APP SHELL ══ */
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+  position: relative;
+}
+
+/* ══ TOP BAR ══ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: linear-gradient(to bottom, rgba(15,13,11,0.98) 80%, transparent);
+  padding: 1.1rem 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.topbar-logo {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.2rem;
+  color: var(--ink-cyan);
+  animation: inkBleed 7s ease-in-out infinite;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.topbar-streak {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper-mid);
+  border: 1px solid rgba(232,160,32,0.25);
+  padding: 4px 10px;
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-amber);
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.streak-fire { font-size: 14px; animation: pulse 1.5s ease-in-out infinite; }
+.topbar-tab-group {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+}
+.topbar-tab {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.topbar-tab.active { color: var(--ink-cyan); border-bottom-color: var(--ink-cyan); }
+.topbar-tab:hover:not(.active) { color: var(--ink-white); }
+
+/* ══ SEASON BANNER ══ */
+.season-banner {
+  margin: 0.5rem 0 1.5rem;
+  padding: 0.6rem 1rem;
+  background: var(--ink-magenta-bleed);
+  border-left: 3px solid var(--ink-magenta);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: fadeUp 0.6s ease both;
+}
+.season-label {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-magenta);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.season-title {
+  font-family: 'Special Elite', serif;
+  font-size: 0.82rem;
+  color: var(--ink-white);
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+/* ══ CARD ══ */
+.card {
+  background: var(--paper-mid);
+  border: 1.5px solid rgba(42,245,224,0.1);
+  border-top: 3px solid var(--ink-magenta-dim);
+  margin-bottom: 1.5rem;
+  position: relative;
+  transform: rotate(var(--tilt));
+  animation: cardIn 0.7s ease both;
+  animation-delay: var(--delay, 0s);
+  transition: transform 0.3s ease, border-top-color 0.3s;
+  overflow: hidden;
+}
+.card:hover {
+  border-top-color: var(--ink-magenta);
+  transform: rotate(var(--tilt)) translateY(-2px);
+}
+.card.resolved { border-top-color: var(--ink-cyan-dim); opacity: 0.7; }
+.card.locked   { border-top-color: var(--ink-muted); }
+
+/* Ink corner accents */
+.card::before, .card::after {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  pointer-events: none;
+}
+.card::before { bottom: 0; right: 0; border-bottom: 1.5px solid var(--ink-cyan-dim); border-right: 1.5px solid var(--ink-cyan-dim); }
+.card::after  { top: 0; left: 0; border-top: 1.5px solid var(--ink-magenta-dim); border-left: 1.5px solid var(--ink-magenta-dim); }
+
+/* Card ink drip */
+.card-drip {
+  position: absolute;
+  top: -1px;
+  width: 3px;
+  height: 0;
+  background: var(--ink-magenta);
+  border-radius: 0 0 3px 3px;
+  animation: inkDrip 4s ease-in infinite;
+}
+
+/* ══ CARD HEADER ══ */
+.card-header {
+  padding: 1.25rem 1.25rem 0.9rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(42,245,224,0.06);
+}
+
+.card-glyph-wrap {
+  flex-shrink: 0;
+  width: 52px; height: 52px;
+  border: 1.5px solid rgba(42,245,224,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: var(--paper);
+  transform: rotate(-2deg);
+}
+.card-glyph-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(232,32,58,0.1);
+  pointer-events: none;
+}
+.card-glyph { font-size: 1.8rem; line-height: 1; filter: url(#roughen-light); }
+
+.card-meta { flex: 1; min-width: 0; }
+.card-week {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.card-god-name {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.3rem;
+  color: var(--ink-white);
+  line-height: 1;
+  margin-bottom: 2px;
+  animation: inkBleed 9s ease-in-out infinite;
+}
+.card-epithet {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-cyan-dim);
+  letter-spacing: 0.08em;
+  font-style: italic;
+}
+
+.card-timer {
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.timer-label {
+  font-family: 'Caveat', cursive;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+.timer-value {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1rem;
+  color: var(--ink-amber);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  animation: inkBleed 8s ease-in-out infinite;
+}
+.timer-value.warning { animation: timerWarn 1.2s ease-in-out infinite; }
+.timer-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--ink-amber);
+  animation: pulse 1.2s ease-in-out infinite;
+  margin-left: auto;
+}
+.timer-dot.warning { background: var(--ink-magenta); }
+
+/* ══ CARD BODY ══ */
+.card-body { padding: 1.1rem 1.25rem; }
+
+.card-decree-title {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-magenta);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.card-question {
+  font-family: 'Special Elite', serif;
+  font-size: 0.92rem;
+  color: var(--ink-white);
+  opacity: 0.88;
+  line-height: 1.75;
+  font-style: italic;
+  margin-bottom: 1.25rem;
+}
+
+/* Choices */
+.card-choices { display: flex; flex-direction: column; gap: 5px; margin-bottom: 1rem; }
+
+.card-choice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(42,245,224,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+  color: var(--ink-white);
+  font-family: 'Special Elite', serif;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  opacity: 0.75;
+  position: relative;
+  overflow: hidden;
+}
+.card-choice::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ink-cyan-bleed);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.card-choice:hover { border-color: var(--ink-cyan-dim); opacity: 1; }
+.card-choice:hover::before { opacity: 1; }
+.card-choice.selected {
+  border-color: var(--ink-cyan);
+  opacity: 1;
+  animation: chosen 0.3s ease;
+}
+.card-choice.selected::before { opacity: 1; }
+.card-choice.correct  { border-color: var(--ink-cyan); background: rgba(42,245,224,0.08); opacity: 1; }
+.card-choice.wrong    { border-color: var(--ink-magenta-dim); opacity: 0.4; }
+
+.choice-letter {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ink-magenta);
+  flex-shrink: 0;
+  line-height: 1.4;
+  min-width: 14px;
+}
+.card-choice.selected .choice-letter { color: var(--ink-cyan); }
+.card-choice.correct  .choice-letter { color: var(--ink-cyan); }
+
+.choice-text { flex: 1; }
+
+.choice-tick {
+  font-size: 12px;
+  color: var(--ink-cyan);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.card-choice.selected .choice-tick { opacity: 1; }
+.card-choice.correct  .choice-tick { opacity: 1; content: '✓'; }
+
+/* Lock overlay for subscriber choices */
+.card-choice.locked-choice {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Oracle insight — subscriber only */
+.oracle-insight {
+  background: var(--ink-amber-bleed);
+  border-left: 2px solid var(--ink-amber);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+}
+.insight-label {
+  font-family: 'Caveat', cursive;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-amber);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+.insight-text {
+  font-size: 0.82rem;
+  color: var(--ink-white);
+  opacity: 0.7;
+  font-style: italic;
+  line-height: 1.65;
+  font-family: 'Special Elite', serif;
+}
+
+/* Subscriber lock banner */
+.subscriber-lock {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(90,82,72,0.15);
+  border: 1px dashed rgba(90,82,72,0.4);
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.subscriber-lock:hover { border-color: var(--ink-amber); }
+.lock-icon { font-size: 14px; opacity: 0.5; flex-shrink: 0; }
+.lock-text {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  letter-spacing: 0.05em;
+}
+.lock-cta {
+  margin-left: auto;
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-amber);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  flex-shrink: 0;
+}
+
+/* ══ CARD FOOTER ══ */
+.card-footer {
+  padding: 0.8rem 1.25rem;
+  border-top: 1px solid rgba(42,245,224,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.card-status {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.card-status.open     { color: var(--ink-cyan-dim); }
+.card-status.resolved { color: var(--ink-muted); }
+.card-status.correct  { color: var(--ink-cyan); }
+.card-status.wrong    { color: var(--ink-magenta); }
+
+.card-actions { display: flex; align-items: center; gap: 8px; }
+
+.btn-lock {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 0.85rem;
+  background: var(--ink-magenta);
+  color: var(--paper);
+  border: none;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+  transform: rotate(-0.4deg);
+  animation: flicker 10s 3s infinite;
+}
+.btn-lock:hover { background: var(--ink-cyan); transform: rotate(-0.4deg) translateY(-1px); }
+.btn-lock:disabled {
+  background: var(--ink-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: rotate(-0.4deg);
+}
+
+.btn-share {
+  width: 32px; height: 32px;
+  border: 1.5px solid rgba(42,245,224,0.2);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+  color: var(--ink-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.btn-share:hover { border-color: var(--ink-cyan); color: var(--ink-cyan); background: var(--ink-cyan-bleed); }
+
+/* Resolve result */
+.resolve-result {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(42,245,224,0.06);
+  background: rgba(42,245,224,0.04);
+}
+.result-label {
+  font-family: 'Caveat', cursive;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-cyan-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+.result-text {
+  font-family: 'Special Elite', serif;
+  font-size: 0.85rem;
+  color: var(--ink-white);
+  opacity: 0.7;
+  line-height: 1.65;
+  font-style: italic;
+}
+.result-points {
+  display: inline-block;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1rem;
+  color: var(--ink-cyan);
+  margin-top: 6px;
+  animation: inkBleed 7s ease-in-out infinite;
+}
+
+/* ══ LOCKED GOD CARD ══ */
+.card.locked .card-body { filter: blur(2px); pointer-events: none; user-select: none; }
+.locked-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(15,13,11,0.6);
+  z-index: 10;
+}
+.locked-overlay-icon { font-size: 2rem; opacity: 0.4; }
+.locked-overlay-text {
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+.locked-overlay-cta {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-amber);
+  text-decoration: underline;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+}
+
+/* ══ EMPTY STATE ══ */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  opacity: 0.5;
+}
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+.empty-text {
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+/* ══ SHARE TOAST ══ */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--paper-light);
+  border: 1.5px solid var(--ink-cyan-dim);
+  border-top: 2px solid var(--ink-cyan);
+  padding: 0.75rem 1.5rem;
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-cyan);
+  letter-spacing: 0.1em;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 480px) {
+  .app { padding: 0 0.5rem 4rem; }
+  .topbar-tab-group { display: none; }
+  .card-god-name { font-size: 1.1rem; }
+  .card-glyph-wrap { width: 44px; height: 44px; }
+  .card-glyph { font-size: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<svg class="filters" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="roughen" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="roughen-light" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="5" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">The Fates</div>
+    <div class="topbar-tab-group">
+      <button class="topbar-tab active" onclick="switchTab(this,'active')">Active</button>
+      <button class="topbar-tab" onclick="switchTab(this,'resolved')">Resolved</button>
+      <button class="topbar-tab" onclick="switchTab(this,'all')">All Gods</button>
+    </div>
+    <div class="topbar-streak">
+      <span class="streak-fire">🔥</span>
+      <span>7 streak</span>
+    </div>
+  </div>
+
+  <!-- SEASON BANNER -->
+  <div class="season-banner">
+    <span class="season-label">Season I</span>
+    <span class="season-title">The Age of Disruption — Week XII of XVI</span>
+  </div>
+
+  <!-- FEED -->
+  <div id="feed"></div>
+
+</div>
+
+<!-- SHARE TOAST -->
+<div class="toast" id="toast">✦ Fate copied to clipboard ✦</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────
+const decrees = [
+  {
+    id: 1,
+    state: 'active',
+    tilt: '-0.6deg',
+    delay: '0s',
+    dripLeft: '28%',
+    god: { glyph: '⚡', name: 'Zeus', epithet: 'The Thunderer' },
+    week: 'Week XII · Season I',
+    decreeTitle: 'The Sovereignty Breach',
+    question: '"The collective known as Typhon has breached OlympusCloud\'s servers. Three million mortal records hang in the dark. The Father of Gods — who does not fear, who does not negotiate, who does not forget — must act before dawn. What does Zeus do?"',
+    choices: [
+      { letter: 'A', text: 'Unleashes the full force of every legal, financial and technical weapon at his disposal. Scorched earth. An example that outlasts the crisis.' },
+      { letter: 'B', text: 'Goes silent. No statement. The counter-strike happens in the dark, without witnesses.' },
+      { letter: 'C', text: 'Negotiates through intermediaries. Pride be damned — mortals must not see the breach.' },
+      { letter: 'D', text: 'Makes it someone else\'s fault. Publicly. At length. The storm redirected.' },
+    ],
+    insight: 'Zeus has never acknowledged weakness in public. The choice between silence and spectacle will reveal which he fears more — the breach, or being seen to care about it.',
+    hours: 47, mins: 23,
+    locked: false,
+    selected: null,
+    subscriber: true,
+  },
+  {
+    id: 2,
+    state: 'active',
+    tilt: '0.4deg',
+    delay: '0.12s',
+    dripLeft: '55%',
+    god: { glyph: '🌹', name: 'Aphrodite', epithet: 'The Irresistible' },
+    week: 'Week XII · Season I',
+    decreeTitle: 'The Promise Due',
+    question: '"A promise Aphrodite made to someone powerful is now being called due. She made it freely. She intended to keep it — in the way she intended Paris to have the most beautiful woman in the world. The consequences will be vast and visible. What does she do?"',
+    choices: [
+      { letter: 'A', text: 'Keeps the promise exactly as worded. She has always kept her promises. The consequences are not her responsibility.' },
+      { letter: 'B', text: 'Renegotiates. She has enough leverage to reframe the terms — if she moves quickly enough.' },
+      { letter: 'C', text: 'Delays. Every day of delay is a day of advantage. She is very good at delay.' },
+      { letter: 'D', text: 'Breaks it. Openly. And offers something better — something they will find impossible to refuse.' },
+    ],
+    insight: null,
+    hours: 3, mins: 41,
+    locked: false,
+    selected: null,
+    subscriber: false,
+  },
+  {
+    id: 3,
+    state: 'active',
+    tilt: '-0.3deg',
+    delay: '0.24s',
+    dripLeft: '40%',
+    god: { glyph: '🍷', name: 'Dionysus', epithet: 'The Twice-Born' },
+    week: 'Week XII · Season I',
+    decreeTitle: 'The Gates of Thebes',
+    question: '"An institution of power has refused to acknowledge Dionysus — locked him out, dismissed him publicly, told the world he does not matter. He has arrived at their gates. His followers are behind him. He has not yet spoken. What does the twice-born god do next?"',
+    choices: [
+      { letter: 'A', text: 'Waits. He has infinite patience and no need to be somewhere else. He has simply arrived.' },
+      { letter: 'B', text: 'Sends something inside — an idea, a person, a product — and lets it work from within.' },
+      { letter: 'C', text: 'Makes the refusal itself the spectacle. The locked gate is more powerful than the open one.' },
+      { letter: 'D', text: 'Walks away. Pentheus refused too. He remembers what happened next.' },
+    ],
+    insight: 'Dionysus was refused before. By Pentheus, King of Thebes, who locked him up and paid with everything. He does not need to repeat the ending — only to be certain the other party has forgotten it.',
+    hours: 71, mins: 8,
+    locked: true,
+    selected: null,
+    subscriber: true,
+  },
+  {
+    id: 4,
+    state: 'resolved',
+    tilt: '0.5deg',
+    delay: '0.36s',
+    dripLeft: '65%',
+    god: { glyph: '🦉', name: 'Athena', epithet: 'The Undefeated' },
+    week: 'Week XI · Season I',
+    decreeTitle: 'The Architect\'s Dilemma',
+    question: '"The framework Athena built — by which a great contest is judged — has been used to indict the institution she serves. She must vote publicly, on the record. What does the goddess of strategy do when her own game is turned against her?"',
+    choices: [
+      { letter: 'A', text: 'Votes for compliance. The guidelines are the guidelines. She will manage the consequences separately.' },
+      { letter: 'B', text: 'Recuses herself — conflict of interest — issuing a statement so precise it implies everything and states nothing.' },
+      { letter: 'C', text: 'Calls an emergency session to amend the framework before the vote. She changes the terrain rather than accepts it.' },
+      { letter: 'D', text: 'Resigns from the body entirely, framing it as principled withdrawal from institutional capture.' },
+    ],
+    insight: 'Athena built leverage through institutions rather than despite them. The question is not whether she will protect what she serves — it is whether she will sacrifice the institution she built to do it.',
+    hours: 0, mins: 0,
+    locked: false,
+    selected: 'C',
+    resolvedChoice: 'B',
+    resolveText: 'Athena recused herself — then published a 40-page technical analysis so precise that the vote became functionally impossible without her participation anyway. She did not need to be in the room. She had already written the room.',
+    points: '+420 Divine Favour',
+    subscriber: true,
+  },
+];
+
+// ── Render ────────────────────────────────────────────────────
+let currentTab = 'active';
+
+function switchTab(el, tab) {
+  document.querySelectorAll('.topbar-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentTab = tab;
+  renderFeed();
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+
+  const filtered = currentTab === 'all' ? decrees
+    : currentTab === 'active' ? decrees.filter(d => d.state === 'active')
+    : decrees.filter(d => d.state === 'resolved');
+
+  if (filtered.length === 0) {
+    feed.innerHTML = `<div class="empty-state"><span class="empty-icon">🕯️</span><p class="empty-text">The Fates are silent here.<br>Check another decree.</p></div>`;
+    return;
+  }
+
+  filtered.forEach(d => feed.appendChild(buildCard(d)));
+}
+
+function buildCard(d) {
+  const isResolved = d.state === 'resolved';
+  const isWarning  = !isResolved && (d.hours < 6);
+  const timeStr    = isResolved ? 'Resolved' : formatTime(d.hours, d.mins);
+
+  const wrap = document.createElement('div');
+  wrap.className = `card${d.locked ? ' locked' : ''}${isResolved ? ' resolved' : ''}`;
+  wrap.style.cssText = `--tilt:${d.tilt}; --delay:${d.delay};`;
+
+  // Ink drip
+  const drip = document.createElement('div');
+  drip.className = 'card-drip';
+  drip.style.left = d.dripLeft;
+  wrap.appendChild(drip);
+
+  // ── HEADER ──
+  const header = document.createElement('div');
+  header.className = 'card-header';
+  header.innerHTML = `
+    <div class="card-glyph-wrap">
+      <span class="card-glyph">${d.god.glyph}</span>
+    </div>
+    <div class="card-meta">
+      <div class="card-week">${d.week}</div>
+      <div class="card-god-name">${d.god.name}</div>
+      <div class="card-epithet">${d.god.epithet}</div>
+    </div>
+    <div class="card-timer">
+      <span class="timer-label">${isResolved ? 'Status' : 'Closes'}</span>
+      <span class="timer-value${isWarning ? ' warning' : ''}">${timeStr}</span>
+      <div class="timer-dot${isWarning ? ' warning' : ''}"></div>
+    </div>
+  `;
+  wrap.appendChild(header);
+
+  // ── BODY ──
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  body.innerHTML = `
+    <div class="card-decree-title">${d.decreeTitle}</div>
+    <div class="card-question">${d.question}</div>
+  `;
+
+  // Choices
+  const choices = document.createElement('div');
+  choices.className = 'card-choices';
+  d.choices.forEach(c => {
+    const btn = document.createElement('button');
+    let cls = 'card-choice';
+    if (isResolved) {
+      if (c.letter === d.resolvedChoice) cls += ' correct';
+      else if (c.letter === d.selected)  cls += ' wrong';
+      else cls += ' wrong';
+    } else if (d.selected === c.letter) {
+      cls += ' selected';
+    }
+    btn.className = cls;
+    btn.disabled = isResolved;
+    btn.innerHTML = `
+      <span class="choice-letter">${c.letter}</span>
+      <span class="choice-text">${c.text}</span>
+      <span class="choice-tick">${c.letter === d.resolvedChoice && isResolved ? '✓' : (d.selected === c.letter && !isResolved ? '✓' : '')}</span>
+    `;
+    if (!isResolved && !d.locked) {
+      btn.onclick = () => selectChoice(d, c.letter, choices, footerStatus, lockBtn);
+    }
+    choices.appendChild(btn);
+  });
+  body.appendChild(choices);
+
+  // Oracle insight
+  if (d.insight && d.subscriber) {
+    const ins = document.createElement('div');
+    ins.className = 'oracle-insight';
+    ins.innerHTML = `<span class="insight-label">⚡ Oracle Insight — Subscriber Only</span><p class="insight-text">${d.insight}</p>`;
+    body.appendChild(ins);
+  } else if (d.insight && !d.subscriber) {
+    const lock = document.createElement('div');
+    lock.className = 'subscriber-lock';
+    lock.innerHTML = `<span class="lock-icon">🔒</span><span class="lock-text">Oracle Insight — hidden from Mortals</span><span class="lock-cta">Ascend →</span>`;
+    body.appendChild(lock);
+  }
+
+  // Resolve result
+  if (isResolved) {
+    const res = document.createElement('div');
+    res.className = 'resolve-result';
+    const correct = d.selected === d.resolvedChoice;
+    res.innerHTML = `
+      <span class="result-label">// Fate Resolved</span>
+      <p class="result-text">${d.resolveText}</p>
+      ${d.selected ? `<div class="result-points">${correct ? d.points : '— No Favour earned'}</div>` : ''}
+    `;
+    body.appendChild(res);
+  }
+
+  wrap.appendChild(body);
+
+  // ── FOOTER ──
+  const footer = document.createElement('div');
+  footer.className = 'card-footer';
+
+  const footerStatus = document.createElement('span');
+  footerStatus.className = `card-status ${isResolved ? (d.selected === d.resolvedChoice ? 'correct' : 'wrong') : 'open'}`;
+  footerStatus.textContent = isResolved
+    ? (d.selected === d.resolvedChoice ? '✓ Correct — Favour earned' : '✕ Fate did not align')
+    : (d.selected ? `Prophecy locked: ${d.selected}` : 'Awaiting your prophecy');
+  footer.appendChild(footerStatus);
+
+  const actions = document.createElement('div');
+  actions.className = 'card-actions';
+
+  // Share button
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'btn-share';
+  shareBtn.title = 'Share this decree';
+  shareBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10.5" cy="2.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="10.5" cy="10.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="2.5" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.2"/><line x1="4" y1="5.7" x2="9" y2="3.3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="4" y1="7.3" x2="9" y2="9.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+  shareBtn.onclick = () => shareDecree(d);
+  actions.appendChild(shareBtn);
+
+  // Lock-in button
+  if (!isResolved) {
+    const lockBtn = document.createElement('button');
+    lockBtn.className = 'btn-lock';
+    lockBtn.textContent = d.selected ? 'Change Fate' : 'Lock In';
+    lockBtn.disabled = !d.selected;
+    lockBtn.id = `lock-${d.id}`;
+    actions.appendChild(lockBtn);
+
+    // Update footer status dynamically via closure
+    Object.defineProperty(footerStatus, '_update', {
+      value: (sel) => {
+        footerStatus.className = `card-status ${sel ? 'open' : 'open'}`;
+        footerStatus.textContent = sel ? `Prophecy locked: ${sel}` : 'Awaiting your prophecy';
+        lockBtn.disabled = !sel;
+        lockBtn.textContent = sel ? 'Change Fate' : 'Lock In';
+      }
+    });
+  }
+
+  footer.appendChild(actions);
+  wrap.appendChild(footer);
+
+  // Locked god overlay
+  if (d.locked) {
+    const overlay = document.createElement('div');
+    overlay.className = 'locked-overlay';
+    overlay.innerHTML = `
+      <span class="locked-overlay-icon">🔒</span>
+      <span class="locked-overlay-text">This decree requires<br>Oracle Tier</span>
+      <span class="locked-overlay-cta">Ascend to Oracle →</span>
+    `;
+    wrap.appendChild(overlay);
+  }
+
+  return wrap;
+}
+
+function selectChoice(d, letter, choicesEl, statusEl, lockEl) {
+  d.selected = d.selected === letter ? null : letter;
+  choicesEl.querySelectorAll('.card-choice').forEach((btn, i) => {
+    const c = d.choices[i];
+    btn.className = 'card-choice' + (d.selected === c.letter ? ' selected' : '');
+    btn.querySelector('.choice-tick').textContent = d.selected === c.letter ? '✓' : '';
+  });
+  if (statusEl && statusEl._update) statusEl._update(d.selected);
+}
+
+function formatTime(h, m) {
+  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
+  if (h > 0)   return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function shareDecree(d) {
+  const text = `⚡ The Fates App — ${d.god.name}: ${d.decreeTitle}\n\n${d.question.replace(/^"|"$/g,'')}\n\nMake your prophecy: thefatesapp.com`;
+  navigator.clipboard.writeText(text).catch(() => {});
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// Initial render
+renderFeed();
+</script>
+</body>
+</html>

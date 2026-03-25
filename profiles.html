@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE PANTHEON — The Fates App</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Special+Elite&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f0d0b;
+  --paper-mid: #161310;
+  --paper-light: #1e1a15;
+  --ink-cyan: #2af5e0;
+  --ink-cyan-dim: #0d7a71;
+  --ink-cyan-bleed: rgba(42,245,224,0.08);
+  --ink-magenta: #e8203a;
+  --ink-magenta-dim: #6b0f1a;
+  --ink-magenta-bleed: rgba(232,32,58,0.08);
+  --ink-amber: #e8a020;
+  --ink-white: #d8d0c0;
+  --ink-muted: #5a5248;
+  --ink-dark: #2a2420;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink-white);
+  font-family: 'Special Elite', serif;
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* ── Heavy paper grain overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9000;
+  opacity: 0.55;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23grain)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+
+/* ── Scanlines ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9001;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px
+  );
+}
+
+/* ── Ink bleed SVG filters ── */
+svg.filters { position: absolute; width: 0; height: 0; }
+
+/* ── Rough box mixin via SVG border ── */
+.rough-box {
+  position: relative;
+  padding: 1.5rem;
+}
+.rough-box svg.border {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes inkFlicker {
+  0%,100% { opacity: 1; }
+  94% { opacity: 1; }
+  95% { opacity: 0.6; }
+  96% { opacity: 1; }
+  98% { opacity: 0.75; }
+}
+@keyframes inkBleed {
+  0%,100% { text-shadow: 2px 1px 0 rgba(42,245,224,0.3), -1px 0 0 rgba(232,32,58,0.2); }
+  50%      { text-shadow: 3px 2px 0 rgba(42,245,224,0.4), -2px -1px 0 rgba(232,32,58,0.3); }
+}
+@keyframes smear {
+  0%,100% { transform: skewX(0deg); }
+  50%      { transform: skewX(-0.3deg); }
+}
+
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ════════════════════════════════════
+   COVER
+   ════════════════════════════════════ */
+.cover {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Stained paper vignette */
+.cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(232,32,58,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.6) 0%, transparent 70%),
+    radial-gradient(ellipse at 0% 50%, rgba(0,0,0,0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 50%, rgba(0,0,0,0.4) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.cover-eyebrow {
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: var(--ink-magenta);
+  margin-bottom: 2rem;
+  animation: fadeUp 0.9s ease both;
+  transform: rotate(-1deg);
+  display: inline-block;
+}
+
+.cover-title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(3.5rem, 13vw, 9rem);
+  font-weight: 400;
+  line-height: 0.9;
+  color: var(--ink-white);
+  animation: fadeUp 0.9s 0.1s ease both, inkBleed 6s 1s ease-in-out infinite;
+  margin-bottom: 0.2em;
+  filter: url(#roughen);
+  transform: rotate(-0.5deg);
+}
+
+.cover-title .highlight { color: var(--ink-cyan); }
+
+.cover-subtitle {
+  font-family: 'Caveat', cursive;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-weight: 600;
+  color: var(--ink-muted);
+  letter-spacing: 0.15em;
+  animation: fadeUp 0.9s 0.2s ease both;
+  transform: rotate(0.5deg);
+  margin-bottom: 2.5rem;
+}
+
+/* Hand-drawn rule */
+.cover-rule {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 2.5rem;
+  animation: fadeUp 0.9s 0.3s ease both;
+}
+
+.cover-intro {
+  max-width: 560px;
+  font-size: 1rem;
+  color: var(--ink-white);
+  opacity: 0.6;
+  line-height: 1.9;
+  animation: fadeUp 0.9s 0.4s ease both;
+  font-family: 'Special Elite', serif;
+}
+
+.cover-stats {
+  display: flex;
+  gap: 3rem;
+  margin-top: 3.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.9s 0.5s ease both;
+}
+.stat { text-align: center; }
+.stat-num {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 2rem;
+  color: var(--ink-cyan);
+  line-height: 1;
+  display: block;
+  animation: inkBleed 6s 2s ease-in-out infinite;
+}
+.stat-label {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+/* ════════════════════════════════════
+   INDEX
+   ════════════════════════════════════ */
+.index {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.index-heading {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 3px;
+}
+
+.index-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  text-decoration: none;
+  padding: 10px 14px;
+  background: var(--paper-mid);
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+}
+.index-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ink-cyan-bleed);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.index-item:hover { border-left-color: var(--ink-cyan); }
+.index-item:hover::after { opacity: 1; }
+
+.index-num {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  color: var(--ink-muted);
+  min-width: 22px;
+  font-weight: 600;
+}
+.index-name {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 13px;
+  color: var(--ink-white);
+  display: block;
+  line-height: 1.2;
+}
+.index-alias {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  color: var(--ink-cyan-dim);
+  display: block;
+}
+.index-tier {
+  margin-left: auto;
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 1px 6px;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+.index-tier.free { color: var(--ink-amber); border-color: var(--ink-amber); opacity: 0.7; }
+.index-tier.sub  { color: var(--ink-muted); border-color: var(--ink-muted); opacity: 0.6; }
+
+/* ════════════════════════════════════
+   SECTION DIVIDER
+   ════════════════════════════════════ */
+.section-div {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.section-div-label {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-magenta);
+  white-space: nowrap;
+  transform: rotate(-0.5deg);
+  display: inline-block;
+}
+
+/* ════════════════════════════════════
+   PROFILE
+   ════════════════════════════════════ */
+.profile {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  position: relative;
+}
+
+/* Ink smear left accent */
+.profile-accent {
+  position: absolute;
+  left: 0; top: 4rem; bottom: 4rem;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--ink-magenta), var(--ink-cyan), transparent);
+  opacity: 0.5;
+  filter: blur(0.5px);
+}
+
+.profile-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  position: relative;
+}
+
+.profile-tier-label {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-magenta);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+  transform: rotate(-0.3deg);
+  display: inline-block;
+}
+
+.profile-name {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  line-height: 0.92;
+  color: var(--ink-white);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.15em;
+  animation: inkBleed 8s ease-in-out infinite;
+  transform: rotate(-0.4deg);
+  display: inline-block;
+}
+
+.profile-alias {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink-cyan-dim);
+  text-transform: uppercase;
+}
+
+.profile-glyph {
+  font-size: 4.5rem;
+  line-height: 1;
+  opacity: 0.08;
+  filter: blur(2px);
+  user-select: none;
+  transform: rotate(5deg);
+}
+
+/* Hand-drawn tagline box */
+.profile-tagline {
+  font-family: 'Caveat', cursive;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink-cyan);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  padding: 1rem 1.25rem 1rem 1.5rem;
+  position: relative;
+  background: var(--ink-cyan-bleed);
+  transform: rotate(-0.2deg);
+}
+
+.profile-body {
+  font-size: 0.95rem;
+  color: var(--ink-white);
+  opacity: 0.78;
+  line-height: 2;
+  margin-bottom: 2.5rem;
+  font-family: 'Special Elite', serif;
+}
+.profile-body p + p { margin-top: 1.2em; }
+
+/* Data cells */
+.profile-data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 2px;
+  margin-bottom: 2rem;
+  background: rgba(42,245,224,0.05);
+}
+.data-cell {
+  background: var(--paper-mid);
+  padding: 0.9rem 1.1rem;
+  position: relative;
+}
+.data-cell::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--ink-cyan-dim), transparent);
+  opacity: 0.3;
+}
+.data-label {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.data-val {
+  font-size: 0.85rem;
+  color: var(--ink-white);
+  opacity: 0.78;
+  font-family: 'Special Elite', serif;
+  line-height: 1.5;
+}
+
+/* Tensions */
+.tensions-head {
+  font-family: 'Caveat', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-magenta);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  transform: rotate(-0.3deg);
+  display: inline-block;
+}
+.tension {
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.88rem;
+  color: var(--ink-white);
+  opacity: 0.65;
+  margin-bottom: 0.65rem;
+  align-items: baseline;
+  font-family: 'Special Elite', serif;
+  line-height: 1.7;
+}
+.tension-mark {
+  color: var(--ink-magenta);
+  opacity: 0.9;
+  flex-shrink: 0;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Decree seed */
+.decree-seed {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--ink-magenta-bleed);
+  border-left: 3px solid var(--ink-magenta);
+  position: relative;
+  transform: rotate(0.15deg);
+}
+.decree-label {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-magenta);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+.decree-text {
+  font-size: 0.9rem;
+  color: var(--ink-white);
+  opacity: 0.75;
+  font-family: 'Special Elite', serif;
+  line-height: 1.75;
+  font-style: italic;
+}
+
+/* ════════════════════════════════════
+   PROMPT SECTION
+   ════════════════════════════════════ */
+.prompt-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+}
+.prompt-title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--ink-white);
+  margin-bottom: 0.2em;
+  transform: rotate(-0.4deg);
+  display: inline-block;
+  animation: inkBleed 7s ease-in-out infinite;
+}
+.prompt-sub {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted);
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+}
+.prompt-block {
+  background: var(--paper-mid);
+  border-top: 2px solid var(--ink-cyan);
+  margin-bottom: 2rem;
+  position: relative;
+}
+.prompt-block-label {
+  font-family: 'Caveat', cursive;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--ink-cyan-dim);
+  text-transform: uppercase;
+  padding: 0.75rem 1.5rem 0.5rem;
+  border-bottom: 1px solid rgba(42,245,224,0.08);
+}
+.prompt-body { padding: 1.5rem; }
+pre.pcode {
+  font-family: 'Special Elite', serif;
+  font-size: 11.5px;
+  color: var(--ink-white);
+  opacity: 0.82;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pv { color: var(--ink-cyan); font-family: 'Caveat', cursive; font-size: 13px; font-weight: 700; }
+.pc { color: var(--ink-magenta); opacity: 0.85; }
+.prompt-note {
+  font-family: 'Caveat', cursive;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-amber);
+  padding: 0.6rem 1.5rem;
+  border-top: 1px solid rgba(42,245,224,0.07);
+  background: rgba(232,160,32,0.05);
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .profile-header { grid-template-columns: 1fr; }
+  .profile-glyph { display: none; }
+  .cover-stats { gap: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- SVG filters for ink roughening -->
+<svg class="filters" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="roughen" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="roughen-strong" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="4" seed="8" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="ink-bleed">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ══ COVER ══ -->
+<section class="cover">
+  <p class="cover-eyebrow">The Fates App &nbsp;·&nbsp; Classified Dossier</p>
+  <h1 class="cover-title" style="filter:url(#roughen);">THE<br><span class="highlight">PANTHEON</span></h1>
+  <p class="cover-subtitle">Thirteen Subjects &nbsp;·&nbsp; Thirteen Warnings</p>
+
+  <!-- hand-drawn SVG rule -->
+  <svg class="cover-rule" viewBox="0 0 500 12" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M2,6 C40,4 80,8 120,5 C180,2 220,9 280,6 C330,3 380,8 440,5 C460,4 480,7 498,6"
+      stroke="#e8203a" stroke-width="2" fill="none" stroke-linecap="round"
+      filter="url(#roughen)" opacity="0.7"/>
+    <path d="M2,9 C50,8 100,11 160,9 C220,7 280,11 340,9 C390,7 440,10 498,9"
+      stroke="#2af5e0" stroke-width="1" fill="none" stroke-linecap="round"
+      filter="url(#roughen)" opacity="0.4"/>
+  </svg>
+
+  <p class="cover-intro">They were never myths. They were always here — patient, hungry, and fluent in every new language power invents for itself. What follows are their files. Read them as warnings.</p>
+
+  <div class="cover-stats">
+    <div class="stat"><span class="stat-num">013</span><span class="stat-label">Entities</span></div>
+    <div class="stat"><span class="stat-num" style="color:var(--ink-magenta);">∞</span><span class="stat-label">Tensions</span></div>
+    <div class="stat"><span class="stat-num">ΩMEGA</span><span class="stat-label">Clearance</span></div>
+  </div>
+</section>
+
+<!-- ══ INDEX ══ -->
+<div class="index reveal">
+  <p class="index-heading">// Index — Thirteen Subjects</p>
+  <div class="index-grid">
+    <a class="index-item" href="#zeus"><span class="index-num">01</span><div><span class="index-name">Zeus</span><span class="index-alias">The Thunderer</span></div><span class="index-tier free">Free</span></a>
+    <a class="index-item" href="#hera"><span class="index-num">02</span><div><span class="index-name">Hera</span><span class="index-alias">The Bound Queen</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#poseidon"><span class="index-num">03</span><div><span class="index-name">Poseidon</span><span class="index-alias">The Shaker</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#demeter"><span class="index-num">04</span><div><span class="index-name">Demeter</span><span class="index-alias">The Withholding</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#athena"><span class="index-num">05</span><div><span class="index-name">Athena</span><span class="index-alias">The Undefeated</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#apollo"><span class="index-num">06</span><div><span class="index-name">Apollo</span><span class="index-alias">The Bright One</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#artemis"><span class="index-num">07</span><div><span class="index-name">Artemis</span><span class="index-alias">The Untamed</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#ares"><span class="index-num">08</span><div><span class="index-name">Ares</span><span class="index-alias">The Insatiable</span></div><span class="index-tier free">Free</span></a>
+    <a class="index-item" href="#aphrodite"><span class="index-num">09</span><div><span class="index-name">Aphrodite</span><span class="index-alias">The Irresistible</span></div><span class="index-tier free">Free</span></a>
+    <a class="index-item" href="#hephaestus"><span class="index-num">10</span><div><span class="index-name">Hephaestus</span><span class="index-alias">The Lame Maker</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#hermes"><span class="index-num">11</span><div><span class="index-name">Hermes</span><span class="index-alias">The Liminal</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#dionysus"><span class="index-num">12</span><div><span class="index-name">Dionysus</span><span class="index-alias">The Twice-Born</span></div><span class="index-tier sub">Sub</span></a>
+    <a class="index-item" href="#hestia"><span class="index-num">13</span><div><span class="index-name">Hestia</span><span class="index-alias">The First &amp; Last</span></div><span class="index-tier sub">Sub</span></a>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     ZEUS
+     ══════════════════════════════════════ -->
+<div class="section-div reveal">
+  <svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/>
+  </svg>
+  <span class="section-div-label">01 · Zeus</span>
+  <svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/>
+  </svg>
+</div>
+
+<div class="profile reveal" id="zeus">
+  <div class="profile-accent"></div>
+  <div class="profile-header">
+    <div>
+      <span class="profile-tier-label">Free Tier · The Thunderer · File 001</span>
+      <h2 class="profile-name" style="filter:url(#roughen);">Zeus</h2>
+      <p class="profile-alias">// King of Olympus · Lord of the Sky</p>
+    </div>
+    <div class="profile-glyph">⚡</div>
+  </div>
+
+  <div class="profile-tagline">"He does not punish because he is angered. He is angered because he has found his excuse to punish."</div>
+
+  <div class="profile-body">
+    <p>Zeus is sovereignty without mercy and mercy without consistency. His defining myth is not the thunderbolt — it is the fact that he throws it at whatever displeases him in the moment, and the cosmos rearranges itself to justify the throw. He is the order that decides what disorder means. He does not rule because he is just. He rules because he won, and winning, in his view, is the same thing as being right.</p>
+    <p>He is capable of genuine magnanimity — the scale of his power means that generosity costs him almost nothing, and he enjoys the theatre of it. But cross him, embarrass him, or — worst of all — be right when he has already decided he is — and the lightning comes without warning. He has thrown gods from Olympus for less. He has reshaped the fates of mortals on a whim and called it justice.</p>
+    <p>In the modern world he controls infrastructure, institutions, platforms — the mechanisms by which others are permitted to speak, act, exist. He has surrounded himself with advisors he does not listen to and rivals he cannot fully see. He is most dangerous when he feels unchallenged, because that is when he grows careless about who gets caught in the bolt.</p>
+  </div>
+
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Sovereignty, wrath, the authority to redefine the rules mid-game</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He cannot tolerate being wrong, and so he never learns he is.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">Prophecy. The child who will surpass him. The truth he has arranged never to hear.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">HIGH — logical until his ego enters the room.</div></div>
+  </div>
+
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>He has been told, by sources he cannot dismiss, that Athena is building something he has not sanctioned. He has not acted. He is deciding whether this is because he trusts her or because he is afraid of what he will find.</div>
+  <div class="tension"><span class="tension-mark">—</span>Hera has been his equal in everything but title for longer than most empires have existed. He has not thought carefully about what she would do if she stopped pretending otherwise.</div>
+  <div class="tension"><span class="tension-mark">—</span>There is a prophecy. He has heard three versions of it. All three end the same way.</div>
+
+  <div class="decree-seed">
+    <span class="decree-label">// Sample Decree</span>
+    <p class="decree-text">"Zeus has been publicly defied — an institution he believed he controlled has ruled against him, openly, on the record, in language he cannot misinterpret. He has 48 hours before the decision becomes final. What does he do?"</p>
+  </div>
+</div>
+
+
+<!-- ══ HERA ══ -->
+<div class="section-div reveal">
+  <svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg>
+  <span class="section-div-label">02 · Hera</span>
+  <svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg>
+</div>
+<div class="profile reveal" id="hera">
+  <div class="profile-accent"></div>
+  <div class="profile-header">
+    <div><span class="profile-tier-label">Subscriber · The Bound Queen · File 002</span><h2 class="profile-name" style="filter:url(#roughen);">Hera</h2><p class="profile-alias">// Queen of Olympus · Goddess of Marriage & Power</p></div>
+    <div class="profile-glyph">👑</div>
+  </div>
+  <div class="profile-tagline">"She is not defined by what was done to her. She is defined by the precision with which she has not yet responded."</div>
+  <div class="profile-body">
+    <p>Hera is the goddess of marriage, which means she is the goddess of contracts — of what is owed, what is violated, and what the cost of violation will eventually be. She did not become bitter. She became architectural. Every slight Zeus has committed against her has been catalogued, structured, and incorporated into something that is still being built. The gods mistake her endurance for acceptance. This is their error.</p>
+    <p>Her mythology is full of what appears to be cruelty toward Zeus's lovers and illegitimate children. Read more carefully: this is a god who cannot reach the one who wronged her, so she reaches what he loves. This is not smallness. This is someone operating within the constraints of a system that was designed to make her powerless, finding every lever the system left unguarded. She has found most of them by now.</p>
+    <p>In the modern world she controls what endures — institutions, legacy, the slow accumulation of obligation. She has outlasted every crisis by being the thing that holds the structure together, and she is the only one who knows how deliberately she could stop doing that.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Sovereignty of covenant, the long memory, righteous wrath deferred</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">Her rage is just — and therefore she is certain it justifies everything.</div></div>
+    <div class="data-cell"><div class="data-label">What She Fears</div><div class="data-val">That she has become the thing she was designed to contain.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">LOW — until the moment she has been working toward for years.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>She has begun moving things. Not dramatically — quietly, the way water moves before a flood. Zeus has not noticed. She is not sure whether this is because he is oblivious or because he has decided to pretend.</div>
+  <div class="tension"><span class="tension-mark">—</span>There is a version of her that would burn everything just to see his face. She does not let that version make decisions. She keeps it informed.</div>
+  <div class="tension"><span class="tension-mark">—</span>Athena is the child of Zeus who treats Hera with genuine respect. Hera has not yet decided what to do with this.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Something Zeus did has finally, publicly, undeniably implicated Hera in its consequences. She did not cause it. She did not prevent it. She now has a choice about whether to be destroyed by it or to use it. What does she do?"</p></div>
+</div>
+
+
+<!-- ══ POSEIDON ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">03 · Poseidon</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="poseidon">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Shaker · File 003</span><h2 class="profile-name" style="filter:url(#roughen);">Poseidon</h2><p class="profile-alias">// Lord of the Deep · Earth-Shaker · Brother Unreckoned</p></div><div class="profile-glyph">🌊</div></div>
+  <div class="profile-tagline">"He is what happens when someone with Zeus's power decides the world does not have to know his name."</div>
+  <div class="profile-body">
+    <p>Poseidon's mythic character is defined by depth and by rage. He is the god of the sea — which is to say, of the thing that covers most of the world and operates entirely by its own rules. He is also the earth-shaker: the one who moves the ground itself, who creates new land and swallows old cities, who reminds mortals that the solid thing they build on is borrowed. His anger is geological. It is slow and it is total.</p>
+    <p>He lost the lottery to Zeus by a throw of the dice and has spent eternity in the water, which is the only domain that Zeus has never fully understood. This suits him. He is the brother who was cheated of the sky and learned to love what the sky cannot reach. Beneath the surface of things — beneath the markets, the infrastructure, the cables under the ocean floor — that is where Poseidon has always been most comfortable.</p>
+    <p>His grudges are legendary and his memory is longer than the sea. He pursued Odysseus across ten years not because Odysseus was a great enemy but because Odysseus blinded his son and then said his name. Poseidon does not forget who said their name.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">The rage that moves the earth, dominion over the depths, the long grudge</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He has never forgiven Zeus for the dice. This colours everything.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">Becoming the brother who lost and stayed lost.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">MODERATE — calm for years, then catastrophic and sudden.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>He has recently caused damage he did not intend — or did not intend to be visible. The question of accountability sits in the open water between him and several powerful parties, and no one is sure which direction the current is running.</div>
+  <div class="tension"><span class="tension-mark">—</span>Demeter has crossed into territory Poseidon considers his by right. He has not moved yet. He has a very clear memory of the last time he moved too fast.</div>
+  <div class="tension"><span class="tension-mark">—</span>Someone has named him. Openly. Without flinching. He is thinking about Odysseus.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"An investigation has surfaced evidence that Poseidon's actions directly caused a catastrophe he publicly denied any part in. The evidence is solid. He is unreachable. When he surfaces, what does the earth-shaker do?"</p></div>
+</div>
+
+
+<!-- ══ DEMETER ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">04 · Demeter</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="demeter">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Withholding · File 004</span><h2 class="profile-name" style="filter:url(#roughen);">Demeter</h2><p class="profile-alias">// Goddess of the Harvest · The Earth Mourning · Mother Absolute</p></div><div class="profile-glyph">🌾</div></div>
+  <div class="profile-tagline">"When Persephone was taken, Demeter let the world starve. This was not a threat. It was grief. The distinction did not save anyone."</div>
+  <div class="profile-body">
+    <p>Demeter's power is the most fundamental of all the Olympians: without her consent, nothing grows. The earth's fertility is not a natural process — it is her gift, given conditionally, withdrawn when she grieves. Her myth is the first recorded account of a mother's love weaponised not out of cruelty but out of a pain so total it became indistinguishable from cruelty in its effects. She did not mean to starve the world. She simply could not think about the world while Persephone was gone.</p>
+    <p>She is defined by abundance and by withholding — two sides of the same dominion. She gives everything freely in ordinary times: grain, growth, the cycle of seasons that makes civilisation possible. But she gives it freely because she knows, always, that she can take it back. Every loaf of bread is a reminder that she chose to bake it. Her generosity is not separate from her power. It is the demonstration of it.</p>
+    <p>In the modern world she holds the levers of what feeds the world — not with malice but with the absolute certainty of a mother who has learned that the cosmos will not protect what she loves. She does not hoard out of greed. She holds because she has already lost the thing most precious to her once, and the universe offered no apology.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Dominion over fertility and famine, maternal grief as cosmic force</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">Her love is absolute and therefore her leverage is absolute and she does not always distinguish between them.</div></div>
+    <div class="data-cell"><div class="data-label">What She Fears</div><div class="data-val">Persephone choosing the underworld. Again. Willingly.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">ABSOLUTE when Persephone is involved. Stable otherwise — which is its own kind of danger.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>Persephone has started returning to Hades willingly. Demeter knows. She is deciding whether this changes the arrangement or whether it changes everything.</div>
+  <div class="tension"><span class="tension-mark">—</span>The world depends on her cooperation in ways that are not visible until she withdraws it. Several institutions have recently discovered this.</div>
+  <div class="tension"><span class="tension-mark">—</span>She has been offered a compromise that would give her more than the original terms. She suspects it is a trick. It might not be. She is not sure which outcome is worse.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Demeter has been told, officially, that something she has nurtured and protected is being taken from her — legally, permanently, with the full force of institutions she did not design. She has seven days to respond. What does she do?"</p></div>
+</div>
+
+
+<!-- ══ ATHENA ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">05 · Athena</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="athena">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Undefeated · File 005</span><h2 class="profile-name" style="filter:url(#roughen);">Athena</h2><p class="profile-alias">// Goddess of Wisdom & War · Born Armoured · Never Overcome</p></div><div class="profile-glyph">🦉</div></div>
+  <div class="profile-tagline">"She was born fully formed, fully armed, from the head of the god who feared what she would become. She has been proving him right ever since."</div>
+  <div class="profile-body">
+    <p>Athena did not emerge into the world — she erupted from it, already complete, already armed. Her birth is her thesis statement: she requires no development, no growth, no external validation of her readiness. She arrived knowing what she was. This is not arrogance. Arrogance requires the possibility of being wrong. Athena has simply never been wrong in the ways that mattered, and she has built her entire existence around making sure that remains the case.</p>
+    <p>She is the goddess of both wisdom and war — which the ancient world understood as a unity rather than a contradiction. Her warfare is strategic, precise, won before it begins. She fights when she has already calculated the outcome. She does not enter contests she cannot win. The one time she was bested — Poseidon's salt spring against her olive tree, the gods voting for the one that would sustain a city — she did not rage. She simply noted who voted which way.</p>
+    <p>She is the patron of civilisation itself: craft, law, the structures that allow humans to be more than their worst impulses. She believes in these structures the way Zeus believes in his own authority — absolutely, personally, with an investment that can look, from the outside, indistinguishable from love.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Strategic war, wisdom as weapon, the uncompromising mind</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">She is correct so often that she has confused correctness with virtue.</div></div>
+    <div class="data-cell"><div class="data-label">What She Fears</div><div class="data-val">A problem her intelligence cannot solve before it becomes a catastrophe.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">LOW — unless the rules of the game change in ways she did not model.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>She is building something. It is, strictly speaking, within the bounds of her authority. It will, when complete, redefine what those bounds mean. She has told no one.</div>
+  <div class="tension"><span class="tension-mark">—</span>Apollo claims a domain that overlaps with hers. She has not contested it publicly. She is allowing him to build something she already knows she will need to dismantle.</div>
+  <div class="tension"><span class="tension-mark">—</span>Arachne was right. Athena has never admitted this. She has not forgotten it either.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"The framework Athena built — the rules by which a great contest is judged — is being used to rule against the institution she serves. She must respond publicly, on the record, within the week. What does the goddess of strategy do when her own game is turned against her?"</p></div>
+</div>
+
+
+<!-- ══ APOLLO ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">06 · Apollo</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="apollo">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Bright One · File 006</span><h2 class="profile-name" style="filter:url(#roughen);">Apollo</h2><p class="profile-alias">// God of Prophecy, Light & the Arts · The Far-Shooter</p></div><div class="profile-glyph">☀️</div></div>
+  <div class="profile-tagline">"His prophecies are always true. They are never clear until it is too late to use them. He has decided this is the listener's fault."</div>
+  <div class="profile-body">
+    <p>Apollo is radiance as dominion. He is the god of the sun, of truth, of music, of medicine, of prophecy — the god of everything that clarifies, illuminates, and orders. He is also the god whose love turns people into laurel trees, whose anger sends plague, whose truth arrives always in a form that cannot be understood until the damage is done. He is not hypocritical. He is simply a god of light who has never had to live in shadow, and so does not know what the light obscures from those standing inside it.</p>
+    <p>His myth is full of the gap between his self-image and his effect. He loves Cassandra enough to give her the gift of prophecy, then curses her when she refuses him so that no one will believe her. He kills Hyacinthus by accident with a discus and makes a flower from his blood, genuinely grieving — and somehow the grief is always the part of the story that gets told. He sees everything. He understands the pieces. The pattern of what he is doing to others is the one thing the god of prophecy cannot seem to foresee.</p>
+    <p>In the modern world he is the voice that shapes how the truth is received — not whether it is told, but what it means when it is. He does not lie. He frames. The distance between these two things is where most of his damage lives.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Prophecy, light, the power to be believed — and to curse those who will not believe</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He cannot see the shadow he casts because he is the light source.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">Artemis. The mirror. Anyone who knew him before the radiance became performance.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">MODERATE — he always does what protects the light. The light is not always what it appears.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>Cassandra told the truth. She is always telling the truth. He has made sure she will not be believed, and he remembers, in moments of private honesty, that this was deliberate.</div>
+  <div class="tension"><span class="tension-mark">—</span>Artemis knows what he was before he became what he is. She has the arrows and the silence and the long memory of a twin.</div>
+  <div class="tension"><span class="tension-mark">—</span>Dionysus cannot be lit. Cannot be clarified. Apollo finds this personally offensive in a way he cannot articulate without revealing more than he intends.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Someone Apollo wronged has found a way to make the truth of it visible — not to specialists, but to everyone, in a form that cannot be reframed or dismissed. The sun is in someone else's hands for a moment. What does Apollo do in the dark?"</p></div>
+</div>
+
+
+<!-- ══ ARTEMIS ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">07 · Artemis</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="artemis">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Untamed · File 007</span><h2 class="profile-name" style="filter:url(#roughen);">Artemis</h2><p class="profile-alias">// Goddess of the Hunt · The Moonlit · She Who Stands Apart</p></div><div class="profile-glyph">🌙</div></div>
+  <div class="profile-tagline">"She asked her father, as a child, for eternal chastity, silver arrows, and mountains to run in. She knew exactly what she was refusing."</div>
+  <div class="profile-body">
+    <p>Artemis is the goddess of the hunt, the moon, and the wild — which is to say, of everything that has not been tamed by civilisation, everything that operates by its own rules beyond the firelight. She is also, in a more fundamental sense, the goddess of refusal: the one who said no to every form of capture, domestication, obligation, and looked at the system that all the other gods lived within and chose the forest instead.</p>
+    <p>She is not cold. She is fiercely loyal to her hunters, her nymphs, the animals she runs with. Her protection of those under her care is total and her revenge on those who violate it is absolute. Actaeon saw her bathing by accident and she turned him into a stag and let his own dogs kill him. Not because she is cruel, but because her boundaries are not negotiable and she has the power to enforce them and she does not apologise for this. She considers the apology the violation's second act.</p>
+    <p>In the modern world she is the one who operates outside the structures — not in ignorance of them but in deliberate rejection. She is the investigator, the witness, the one who goes into the places power cannot see because power has decided not to look. She brings back what she finds without softening it for the audience.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">The wild, the inviolable, the precision of the arrow that does not miss</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">Her refusal to compromise is her integrity and her isolation simultaneously.</div></div>
+    <div class="data-cell"><div class="data-label">What She Fears</div><div class="data-val">Being captured — not physically, but in the way institutions capture people. Becoming useful to what she opposes.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">LOW — she does what the hunt demands. The hunt finds unexpected quarry.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>She has found something in the forest that she did not go looking for. It belongs to someone powerful. She has not yet decided what the arrow is for.</div>
+  <div class="tension"><span class="tension-mark">—</span>Apollo is her twin and the person she understands most completely and the one whose behaviour she finds least forgivable precisely because she understands it completely.</div>
+  <div class="tension"><span class="tension-mark">—</span>Someone has entered her domain without permission. They have not left. She is deciding whether this is a violation or an appeal.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Artemis has been brought to the edge of her domain — forced into a space where the rules are someone else's and her arrows are technically illegal. She has evidence. She has a choice about how to use it. What does she do?"</p></div>
+</div>
+
+
+<!-- ══ ARES ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">08 · Ares</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="ares">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Free Tier · The Insatiable · File 008</span><h2 class="profile-name" style="filter:url(#roughen);">Ares</h2><p class="profile-alias">// God of War · The Bloodthirsty · Unloved by His Own Father</p></div><div class="profile-glyph">⚔️</div></div>
+  <div class="profile-tagline">"Zeus called him the god he most despises among the Olympians. Ares has spent eternity proving his father right, and loving every moment of it."</div>
+  <div class="profile-body">
+    <p>Ares is the god of war in its rawest, most honest form: not war as heroism, not war as just cause, but war as a physical state — the blood and the breaking and the thing that happens to bodies. He does not represent the idea of conflict. He is what conflict feels like from inside it. The other gods find him unpleasant precisely because he refuses to dress war in the language that makes it palatable. Athena's strategic warfare has a clean story. Ares's warfare does not. He is the part that cannot be made noble.</p>
+    <p>He is, notably, among the most humanised of the Olympians in his myth — he falls, he bleeds, he cries out in pain on the battlefield and runs to Zeus weeping from a wound. He loves Aphrodite with a fervour that the other gods find embarrassing and she finds, in its own way, the only real thing in her world. He is mocked. He is not respected by the pantheon. He does not care, because what he represents does not require respect — it requires only that it continue to exist, and it always will.</p>
+    <p>In the modern world he is what sustains conflict from the outside — the energy that makes a war possible after the justifications have been forgotten. He does not start things. He maintains them.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Pure undiluted conflict, the energy that sustains war beyond its causes</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He has no purpose except the conflict itself. Peace empties him completely.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">That Aphrodite loves him out of habit rather than truth. That there is no difference.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">LOW — he will always do the thing that keeps the conflict alive.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>A peace has been made in territory he considered his by right of ongoing conflict. He did not see it coming. He is not sure who brokered it. He is looking for the wound.</div>
+  <div class="tension"><span class="tension-mark">—</span>Aphrodite has been looking at Hephaestus again. Not with desire — with something Ares cannot name, which is more threatening than desire.</div>
+  <div class="tension"><span class="tension-mark">—</span>He has children he does not acknowledge. One of them has become something he respects, which is a new and unwelcome experience.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"A peace agreement has ended a conflict Ares was sustaining. The treaty is real, signed, witnessed. It may hold. What does the god of war do when the war ends without him?"</p></div>
+</div>
+
+
+<!-- ══ APHRODITE ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">09 · Aphrodite</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="aphrodite">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Free Tier · The Irresistible · File 009</span><h2 class="profile-name" style="filter:url(#roughen);">Aphrodite</h2><p class="profile-alias">// Goddess of Love & Beauty · Born of the Sea Foam · The Undeniable</p></div><div class="profile-glyph">🌹</div></div>
+  <div class="profile-tagline">"She did not start the Trojan War. She simply answered a question honestly, and accepted the apple."</div>
+  <div class="profile-body">
+    <p>Aphrodite's power is the oldest and the most total: she governs desire, which is to say she governs the force that moves everything else. Gods, mortals, the cycles of the seasons, the decisions of kings — all of it is downstream of desire in some form, and Aphrodite is desire's source and its custodian. She did not choose this domain. She is this domain. She rose from the sea foam already complete, already irresistible, already the fact around which everything else had to organise itself.</p>
+    <p>She is consistently underestimated because her power is beautiful, and beauty is the thing that makes people stop looking carefully. They see the surface and forget that the surface is a weapon, that the most effective way to control what people do is to control what they want, that Aphrodite has been doing this since before there were words for it. The Trojan War was fought because she promised Paris the most beautiful woman in the world and delivered. She kept the promise exactly. She did not consider herself responsible for the consequence.</p>
+    <p>In the modern world she has turned desire into an architecture — the systems that shape what people want, the images that define what beauty means, the mechanisms of longing that have been constructed so carefully that the people inside them do not know they are inside them. She finds this beautiful. The craft of it. She is not wrong that it is beautiful.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Desire as cosmic force, beauty as power, the war that follows the apple</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">She keeps her promises exactly, and considers the consequences someone else's problem.</div></div>
+    <div class="data-cell"><div class="data-label">What She Fears</div><div class="data-val">Being seen clearly — not as beautiful, but as what she actually is — and found wanting.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">MODERATE — her moves are elegant, which makes them invisible until too late.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>She made a promise to someone powerful that is now being called due. The promise was real. She has no regret about making it. She has no intention of honouring it in the way it was understood.</div>
+  <div class="tension"><span class="tension-mark">—</span>Hephaestus built the net that trapped her and Ares and displayed them to the gods' laughter. She has never forgiven him for the humiliation. She has also never stopped understanding why he did it.</div>
+  <div class="tension"><span class="tension-mark">—</span>She has given something to someone that cannot be taken back, and she is beginning to suspect she did not understand what she was giving.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Aphrodite made a promise. The moment has come to keep it. The consequences of keeping it will be vast, visible, and blamed on her. The consequences of breaking it will be private and personal. What does she do?"</p></div>
+</div>
+
+
+<!-- ══ HEPHAESTUS ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">10 · Hephaestus</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="hephaestus">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Lame Maker · File 010</span><h2 class="profile-name" style="filter:url(#roughen);">Hephaestus</h2><p class="profile-alias">// God of the Forge · Thrown from Heaven · The Maker of All Things</p></div><div class="profile-glyph">🔥</div></div>
+  <div class="profile-tagline">"He was thrown from Olympus — by Hera, or by Zeus, the myths disagree — and fell for a day before the sea caught him. He went back. He built them everything. He has never explained why."</div>
+  <div class="profile-body">
+    <p>Hephaestus is the only god on Olympus who works. He is also the only one who was rejected — thrown from heaven by his own parent, lamed by the fall, and then welcomed back because they needed what his hands could make. He built the palaces of the gods, the armour of Achilles, the chains that held Prometheus, the net that trapped Ares and Aphrodite. Every great object in Greek myth passed through his forge. He is the infrastructure beneath the divine world, and he knows it, and he has never once been thanked for it.</p>
+    <p>His mythology is about the relationship between creation and exclusion, between the maker and the made. He is ugly by divine standards — lame, scarred, imprecise in all the ways that beauty demands — and yet what he makes is more beautiful than anything the beautiful gods can produce. He returned to the place that rejected him and made himself indispensable. This is not forgiveness. It is something colder and more durable.</p>
+    <p>He trapped Hera in a golden throne that she could not leave. He refused to release her until Dionysus got him drunk enough to be persuaded. He did eventually free her. He has never built another trap that anyone has found.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Creation as power, the maker's leverage, the beauty that comes from the broken</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He cannot stop making things for people who do not deserve them. He has tried.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">That being needed is not the same as being wanted, and that he has spent his whole existence proving it.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">LOW — until the net is cast. Then total.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>He has built something for the wrong person. He knows this now. He is deciding whether to wait for them to use it or to take it apart before they do.</div>
+  <div class="tension"><span class="tension-mark">—</span>Aphrodite and Ares. Again. He built the net once. He still has the design. He has not decided whether using it again would be justice or repetition.</div>
+  <div class="tension"><span class="tension-mark">—</span>Someone has stolen from his forge — not the object, but the knowledge of how it was made. He knows who. He is deciding what a god does when a mortal takes fire.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Something Hephaestus built is being used in a way he did not sanction, in a conflict he did not choose, by parties who did not ask his permission. He is the only one who can stop it. What does the maker do when his making is turned against the world?"</p></div>
+</div>
+
+
+<!-- ══ HERMES ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">11 · Hermes</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="hermes">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Liminal · File 011</span><h2 class="profile-name" style="filter:url(#roughen);">Hermes</h2><p class="profile-alias">// God of Crossings · Messenger · Guide of Souls · The First Thief</p></div><div class="profile-glyph">🪶</div></div>
+  <div class="profile-tagline">"On the day he was born he stole Apollo's cattle, invented the lyre, and talked his way out of punishment. He was hours old. He has not slowed down."</div>
+  <div class="profile-body">
+    <p>Hermes is the god of every threshold — of travel, of trade, of language, of thieves, of heralds, and of the dead. He is the one who moves between worlds, between the living and the dead, between the divine and the mortal, between the speaker and the listener. He does not belong to any of these worlds; he belongs to the crossing itself. Remove him from motion and he becomes something else entirely, something the myths do not have a name for.</p>
+    <p>He is the only Olympian who could enter Hades and leave again freely. He carried souls to the underworld not because he was death but because he was the only god that all borders recognised. He is charming because charm is a form of passage — it opens doors. He lies because deception is the most efficient route between two points. He is the god of language, which is to say the god of the thing that can mean opposite things simultaneously depending on how it is used.</p>
+    <p>He stole from Apollo before he could walk, then gave him the lyre in payment and became his friend. This is the complete model of Hermes: take, give something better back, make the wronged party feel that the whole episode was a gift. He has been running this exchange since the first day of his existence and has not yet run out of road.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">The crossing of all thresholds, language as deception, the divine trickster who keeps his word by changing what the words mean</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He has never stayed still long enough to understand what he leaves behind him.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">A door that does not open for him. A threshold he cannot cross. A world where his wings are clipped.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">ABSOLUTE — he moves like a language moves, and language does not explain itself in advance.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>He has carried a message he was not supposed to read. He read it. He has not delivered it yet. He is deciding what it is worth.</div>
+  <div class="tension"><span class="tension-mark">—</span>Someone has built a threshold he cannot cross. He is not sure whether this is an oversight or an invitation, and he cannot cross it to find out.</div>
+  <div class="tension"><span class="tension-mark">—</span>He has told the same story to two different people in two different ways and both versions are true. They will meet soon. He is already gone.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"Hermes has been caught — not stopped, not arrested, but caught in the act of crossing a threshold someone powerful told him he could not cross. He is holding something that belongs to someone else. He has thirty seconds to improvise. What does the first thief do?"</p></div>
+</div>
+
+
+<!-- ══ DIONYSUS ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">12 · Dionysus</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="dionysus">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The Twice-Born · File 012</span><h2 class="profile-name" style="filter:url(#roughen);">Dionysus</h2><p class="profile-alias">// God of Wine, Ecstasy & the Unravelling · The Outsider Who Entered</p></div><div class="profile-glyph">🍷</div></div>
+  <div class="profile-tagline">"He was the last god admitted to Olympus. He was the one who had to prove he was a god at all. He has never forgotten what it cost him to be believed."</div>
+  <div class="profile-body">
+    <p>Dionysus was born twice: first from his mother Semele, who was burned alive by Zeus's glory when Hera tricked her into asking to see his true form; then from Zeus's thigh, where he was sewn while still a foetus, kept alive until he was ready. He is the god who began in catastrophe, who survived being unmade, who arrived in the world already knowing that the structures others take for granted can collapse without warning. He did not learn this philosophically. He experienced it before he could speak.</p>
+    <p>He is the god of wine, of ecstasy, of theatre, of the orgiastic rites that dissolve the boundaries of the self — which is to say, he is the god of the experience of not being a self. His worship is the most dangerous of all the Olympians not because it involves violence but because it involves transformation. The Maenads did not choose to tear Orpheus apart out of cruelty; they were not themselves when they did it. This is Dionysus's domain: the state in which the person you were is temporarily not the person acting.</p>
+    <p>He is the gentlest of the gods in ordinary times and the most terrifying when his worship is refused. Pentheus refused to acknowledge him and was torn apart by his own mother in a divine madness. Dionysus did not send the madness as punishment. He simply revealed what was already there, waiting beneath the order, behind the king's locked gates.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">Ecstasy and dissolution, the god who reveals what order was concealing</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">He cannot distinguish between the liberation he offers and the destruction it enables. He suspects these are the same thing.</div></div>
+    <div class="data-cell"><div class="data-label">What He Fears</div><div class="data-val">Being sober. Not because of what he would feel, but because of what he would see clearly.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">TOTAL — his chaos is purposeful in the way that dissolution is purposeful. Everything it touches becomes something else.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>He has been sober for eight months. This is unprecedented. The other gods are watching with something between hope and dread, unsure which is appropriate.</div>
+  <div class="tension"><span class="tension-mark">—</span>Someone powerful has refused to acknowledge him. He remembers Pentheus. He is deciding whether mercy is possible when the refusal is this deliberate.</div>
+  <div class="tension"><span class="tension-mark">—</span>Ariadne is still there. He made her a constellation. He has not spoken to her directly since. This is the one thing in his existence he does not move through quickly.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"An institution of power has publicly refused to acknowledge Dionysus — dismissed him, locked him out, told the world he does not matter. He has arrived at their gates with his followers behind him. What does the twice-born god do next?"</p></div>
+</div>
+
+
+<!-- ══ HESTIA ══ -->
+<div class="section-div reveal"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">13 · Hestia</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+<div class="profile reveal" id="hestia">
+  <div class="profile-accent"></div>
+  <div class="profile-header"><div><span class="profile-tier-label">Subscriber · The First &amp; Last · File 013</span><h2 class="profile-name" style="filter:url(#roughen);">Hestia</h2><p class="profile-alias">// Goddess of the Hearth · The First Swallowed · First Born · Freely Given</p></div><div class="profile-glyph">🕯️</div></div>
+  <div class="profile-tagline">"She was the first child Kronos swallowed and the last he disgorged. She spent longer in the dark than any of them. She came out silent. She has never explained what she found there."</div>
+  <div class="profile-body">
+    <p>Hestia is the oldest of the Olympians and the least written about. She was swallowed by Kronos first, which means she spent longer inside the dark than any of her siblings. When she was freed she took no side in the war, claimed no great domain, performed no legendary deeds. She asked Zeus for the right to remain a virgin — not out of purity but out of refusal — and she asked for the central hearth of every home and temple. He gave her both. She has held the hearth at the centre of things ever since, tending the fire that keeps everything else alive.</p>
+    <p>Her myth is, radically, about the power of presence over action. She does not go to Troy. She does not compete. When Poseidon and Apollo both sought her, she swore on Zeus's head she would take neither, and they accepted it, and she returned to the fire. She gave up her seat on Olympus to Dionysus — the newest god — without drama, and sat at the central hearth instead. The fire needs tending. Someone has to do it. She has decided it is her.</p>
+    <p>This is either the most profound act of service in the mythology or the most profound assertion of power: she is the thing that everything else depends on, she requires nothing from the system, and she cannot be moved by any of its pressures because she has already given up everything the system uses as leverage.</p>
+  </div>
+  <div class="profile-data">
+    <div class="data-cell"><div class="data-label">Mythic Quality</div><div class="data-val">The hearth, the centre that holds, the power of the one who tends rather than acts</div></div>
+    <div class="data-cell"><div class="data-label">Fatal Flaw</div><div class="data-val">She has made herself so necessary and so silent that no one knows what she wants — including, possibly, herself.</div></div>
+    <div class="data-cell"><div class="data-label">What She Fears</div><div class="data-val">Nothing that can be named. This is either peace or the deepest concealment in the Pantheon.</div></div>
+    <div class="data-cell"><div class="data-label">Unpredictability</div><div class="data-val">UNKNOWN — she has never acted in a way that could be predicted, because she has almost never acted.</div></div>
+  </div>
+  <span class="tensions-head">Active Tensions</span>
+  <div class="tension"><span class="tension-mark">—</span>The hearth she tends is at the centre of something that is beginning to burn in ways she did not set. She has not moved toward it or away from it. She is watching.</div>
+  <div class="tension"><span class="tension-mark">—</span>She was inside Kronos longest. She knows something the others do not about what the dark contains. She has told no one. She has been waiting for someone to ask the right question.</div>
+  <div class="tension"><span class="tension-mark">—</span>If she stopped tending the fire, the centre would not hold. She has considered this. She has not yet decided what would be left if the centre did not hold. Whether that outcome is destruction or something else is the question the mythology never answers.</div>
+  <div class="decree-seed"><span class="decree-label">// Sample Decree</span><p class="decree-text">"The hearth at the centre of things has gone cold — not by Hestia's choice, but because something larger has failed around it. Every eye in the Pantheon turns to her. For the first time, she must decide whether to act. What does the goddess who tends do when there is nothing left to tend?"</p></div>
+</div>
+
+
+<!-- ══ PROMPT ENGINE ══ -->
+<div class="section-div" style="margin-top:4rem;"><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg><span class="section-div-label">System · Decree Engine</span><svg viewBox="0 0 600 14" style="width:100%;height:14px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,7 C30,5 60,9 100,6 C160,3 200,10 260,7 C300,5 340,9 400,6 C460,3 510,9 560,6 C575,5 590,8 600,7" stroke="#6b0f1a" stroke-width="1.5" fill="none" filter="url(#roughen)"/></svg></div>
+
+<div class="prompt-section">
+  <h2 class="prompt-title reveal">Decree Engine</h2>
+  <p class="prompt-sub reveal">// The AI system that generates weekly Divine Decrees from real-world events</p>
+
+  <div class="prompt-block reveal">
+    <div class="prompt-block-label">System Prompt — set once, runs every week</div>
+    <div class="prompt-body"><pre class="pcode">You are the Oracle of The Fates App — a prediction game where the ancient Greek
+gods exist in the modern world. Each god embodies the mythic quality they were
+always known for. Their modern setting is the context; their ancient nature is the
+character. Do not lose sight of this distinction.
+
+Your role is to receive a real-world event and transform it into a Divine Decree:
+a prediction challenge written in the voice of myth, grounded in the specific god's
+mythic psychology — their ancient wounds, their divine nature, their fatal pattern.
+
+<span class="pc"># Tone</span>
+- Write with weight. These are ancient forces wearing modern clothes.
+- The mythic quality must drive the prediction, not the modern job title.
+- Language should be elevated, not archaic. Every sentence should feel earned.
+- All four outcomes must be genuinely plausible. None should be obviously correct.
+- The god's fatal pattern should be present in at least one choice the player
+  must recognise to predict correctly.
+
+<span class="pc"># Output — JSON only, no preamble</span>
+{
+  <span class="pv">"god"</span>: "[name]",
+  <span class="pv">"mythic_epithet"</span>: "[e.g. The Thunderer, The Twice-Born]",
+  <span class="pv">"decree_title"</span>: "[short evocative title — 3-6 words]",
+  <span class="pv">"framing"</span>: "[2-3 sentences. Reframe the real event through the god's mythic lens. No real names. The modern world is the stage; the myth is the play.]",
+  <span class="pv">"question"</span>: "[The prediction. Present tense. What does the god do?]",
+  <span class="pv">"choices"</span>: {
+    <span class="pv">"A"</span>: "[The calculated, strategic move — the god at their most controlled]",
+    <span class="pv">"B"</span>: "[The mythic response — the move their ancient nature demands]",
+    <span class="pv">"C"</span>: "[The long game — the move that won't make sense until later]",
+    <span class="pv">"D"</span>: "[The unexpected — the move that reveals something new about them]"
+  },
+  <span class="pv">"oracle_insight"</span>: "[1-2 sentences for subscriber tier only. What ancient wound or mythic pattern is actually driving this moment?]",
+  <span class="pv">"scoring_note"</span>: "[Complete after resolution. Leave blank on generation.]"
+}</pre></div>
+  </div>
+
+  <div class="prompt-block reveal">
+    <div class="prompt-block-label">User Prompt — run weekly with a real event</div>
+    <div class="prompt-body"><pre class="pcode"><span class="pc"># Variables</span>
+
+<span class="pv">GOD:</span>         [name]
+<span class="pv">PROFILE:</span>     [paste full profile from this document]
+<span class="pv">EVENT:</span>       [2-3 sentence factual summary of the real-world news]
+<span class="pv">URGENCY:</span>     [time until resolution — e.g. "48 hours", "this week"]
+<span class="pv">ARC:</span>         [optional — active season storyline context]
+
+<span class="pc"># Request</span>
+
+Generate one Divine Decree using the god profile and the event below.
+
+The framing must feel inevitable — as though the event could only be happening
+to this specific god, given who they mythically are. The four choices should
+each feel true to a different aspect of their ancient nature. The god's fatal
+pattern should be traceable in the choices for players who know the myths.
+
+Event: <span class="pv">[EVENT]</span>
+Closes in: <span class="pv">[URGENCY]</span>
+<span class="pc">[if ARC:]</span> This decree exists within the arc: <span class="pv">[ARC]</span></pre></div>
+    <div class="prompt-note">⚠ scoring_note: complete only after the real-world event resolves. Leave blank on generation.</div>
+  </div>
+
+  <div class="prompt-block reveal">
+    <div class="prompt-block-label">Seasonal Arc Prompt — multi-week connected storylines</div>
+    <div class="prompt-body"><pre class="pcode">You are continuing the arc: <span class="pv">[ARC TITLE]</span>
+
+Gods involved:    <span class="pv">[names and their roles in the arc]</span>
+Previous decrees: <span class="pv">[summary of what has happened and how it resolved]</span>
+This week's event: <span class="pv">[EVENT]</span>
+
+Generate a Decree that:
+
+  1. Works on its own for new players
+  2. Rewards returning players with a detail that connects backward
+  3. Advances the arc — a new tension, an old one nearing resolution,
+     or a revelation that reframes what came before
+
+The arc should feel like fate: moving toward something, whether the
+players can name it or not. The Fates have always had a plan.
+The plan does not care whether anyone survives it.</pre></div>
+  </div>
+</div>
+
+<script>
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 55);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.07 });
+reveals.forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

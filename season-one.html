@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fates App — Season One: The Age of Old Wounds</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Special+Elite&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #0f0d0b;
+  --paper-mid: #161310;
+  --paper-light: #1e1a15;
+  --ink-cyan: #2af5e0;
+  --ink-cyan-dim: #0d7a71;
+  --ink-cyan-bleed: rgba(42,245,224,0.07);
+  --ink-magenta: #e8203a;
+  --ink-magenta-dim: #6b0f1a;
+  --ink-magenta-bleed: rgba(232,32,58,0.07);
+  --ink-amber: #e8a020;
+  --ink-amber-dim: #7a4a10;
+  --ink-white: #d8d0c0;
+  --ink-muted: #5a5248;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink-white);font-family:'Special Elite',serif;font-size:16px;line-height:1.8;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;opacity:0.5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)' opacity='0.4'/%3E%3C/svg%3E");background-size:200px 200px;mix-blend-mode:overlay;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9001;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.05) 3px,rgba(0,0,0,0.05) 4px);}
+svg.filters{position:absolute;width:0;height:0;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+@keyframes inkBleed{0%,100%{text-shadow:2px 1px 0 rgba(42,245,224,0.25),-1px 0 0 rgba(232,32,58,0.15);}50%{text-shadow:3px 2px 0 rgba(42,245,224,0.4),-2px -1px 0 rgba(232,32,58,0.25);}}
+@keyframes flicker{0%,100%{opacity:1;}93%{opacity:1;}94%{opacity:0.5;}95%{opacity:1;}98%{opacity:0.75;}99%{opacity:1;}}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+/* ══ COVER ══ */
+.cover{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:5rem 2rem 4rem;position:relative;overflow:hidden;border-bottom:1px solid rgba(42,245,224,0.08);}
+.cover::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(232,32,58,0.09) 0%,transparent 60%),radial-gradient(ellipse at 0% 100%,rgba(0,0,0,0.5) 0%,transparent 60%),radial-gradient(ellipse at 100% 100%,rgba(0,0,0,0.5) 0%,transparent 60%);pointer-events:none;}
+.cover-season{font-family:'Caveat',cursive;font-size:12px;font-weight:700;letter-spacing:0.35em;color:var(--ink-magenta);text-transform:uppercase;margin-bottom:1.5rem;animation:fadeUp 0.9s ease both;border:1px solid var(--ink-magenta-dim);padding:4px 16px;display:inline-block;}
+.cover-title{font-family:'Permanent Marker',cursive;font-size:clamp(2.5rem,9vw,6.5rem);line-height:0.92;color:var(--ink-white);animation:fadeUp 0.9s 0.1s ease both,inkBleed 7s 1s ease-in-out infinite;transform:rotate(-0.5deg);display:inline-block;letter-spacing:-0.02em;margin-bottom:0.2em;filter:url(#roughen);}
+.cover-title .ink{color:var(--ink-cyan);}
+.cover-subtitle{font-family:'Caveat',cursive;font-size:clamp(0.9rem,2.5vw,1.2rem);font-weight:600;color:var(--ink-muted);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2.5rem;animation:fadeUp 0.9s 0.2s ease both;}
+.cover-rule{width:100%;max-width:480px;margin:0 auto 2.5rem;animation:fadeUp 0.9s 0.25s ease both;}
+.cover-intro{max-width:580px;font-size:1rem;color:var(--ink-white);opacity:0.65;line-height:1.95;animation:fadeUp 0.9s 0.3s ease both;font-family:'Special Elite',serif;}
+.cover-meta{display:flex;gap:3rem;margin-top:3rem;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.9s 0.4s ease both;}
+.meta-item{text-align:center;}
+.meta-num{font-family:'Permanent Marker',cursive;font-size:1.8rem;color:var(--ink-cyan);line-height:1;display:block;animation:inkBleed 8s ease-in-out infinite;}
+.meta-label{font-family:'Caveat',cursive;font-size:11px;letter-spacing:0.2em;color:var(--ink-muted);text-transform:uppercase;}
+
+/* ══ TIMELINE ══ */
+.timeline-wrap{max-width:860px;margin:0 auto;padding:4rem 2rem;}
+.tl-heading{font-family:'Caveat',cursive;font-size:11px;font-weight:700;letter-spacing:0.35em;color:var(--ink-muted);text-transform:uppercase;margin-bottom:2rem;}
+.tl-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;}
+.tl-week{background:var(--paper-mid);padding:0.75rem 0.6rem;text-align:center;border-top:2px solid var(--ink-muted);transition:border-top-color 0.2s;}
+.tl-week.arc-1{border-top-color:var(--ink-magenta);}
+.tl-week.arc-2{border-top-color:var(--ink-cyan);}
+.tl-week.arc-3{border-top-color:var(--ink-amber);}
+.tl-week-num{font-family:'Permanent Marker',cursive;font-size:1.1rem;color:var(--ink-white);display:block;line-height:1;}
+.tl-week-arc{font-family:'Caveat',cursive;font-size:10px;font-weight:700;color:var(--ink-muted);display:block;margin-top:3px;letter-spacing:0.05em;}
+.tl-week.arc-1 .tl-week-arc{color:var(--ink-magenta);}
+.tl-week.arc-2 .tl-week-arc{color:var(--ink-cyan);}
+.tl-week.arc-3 .tl-week-arc{color:var(--ink-amber);}
+.tl-week-title{font-family:'Caveat',cursive;font-size:10px;color:var(--ink-muted);display:block;margin-top:4px;line-height:1.3;}
+
+/* ══ ARC SECTION ══ */
+.arc{max-width:860px;margin:0 auto;padding:4rem 2rem;border-bottom:1px solid rgba(42,245,224,0.06);position:relative;}
+.arc::before{content:'';position:absolute;left:0;top:4rem;bottom:4rem;width:3px;opacity:0.5;}
+.arc.oresteia::before{background:linear-gradient(to bottom,var(--ink-magenta),transparent);}
+.arc.bacchae::before{background:linear-gradient(to bottom,var(--ink-cyan),transparent);}
+.arc.cassandra::before{background:linear-gradient(to bottom,var(--ink-amber),transparent);}
+
+.arc-header{margin-bottom:2.5rem;}
+.arc-eyebrow{font-family:'Caveat',cursive;font-size:10px;font-weight:700;letter-spacing:0.35em;text-transform:uppercase;margin-bottom:0.5rem;display:inline-block;transform:rotate(-0.3deg);}
+.arc.oresteia .arc-eyebrow{color:var(--ink-magenta);}
+.arc.bacchae .arc-eyebrow{color:var(--ink-cyan);}
+.arc.cassandra .arc-eyebrow{color:var(--ink-amber);}
+.arc-title{font-family:'Permanent Marker',cursive;font-size:clamp(2rem,6vw,3.8rem);color:var(--ink-white);line-height:0.95;margin-bottom:0.15em;transform:rotate(-0.4deg);display:inline-block;animation:inkBleed 9s ease-in-out infinite;filter:url(#roughen);}
+.arc-subtitle{font-family:'Caveat',cursive;font-size:13px;font-weight:600;letter-spacing:0.12em;color:var(--ink-muted);font-style:italic;margin-bottom:1.5rem;}
+.arc-source{font-family:'Caveat',cursive;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:3px 10px;border:1px solid;display:inline-block;margin-bottom:1.5rem;}
+.arc.oresteia .arc-source{color:var(--ink-magenta);border-color:var(--ink-magenta-dim);}
+.arc.bacchae .arc-source{color:var(--ink-cyan);border-color:var(--ink-cyan-dim);}
+.arc.cassandra .arc-source{color:var(--ink-amber);border-color:var(--ink-amber-dim);}
+
+.arc-premise{font-size:1rem;color:var(--ink-white);opacity:0.8;line-height:1.95;margin-bottom:1.5rem;font-family:'Special Elite',serif;}
+.arc-myth{background:var(--paper-mid);border-left:2px solid;padding:1.1rem 1.4rem;margin-bottom:2rem;font-size:0.92rem;color:var(--ink-white);opacity:0.7;line-height:1.9;font-style:italic;font-family:'Special Elite',serif;}
+.arc.oresteia .arc-myth{border-left-color:var(--ink-magenta-dim);}
+.arc.bacchae .arc-myth{border-left-color:var(--ink-cyan-dim);}
+.arc.cassandra .arc-myth{border-left-color:var(--ink-amber-dim);}
+.arc-myth-source{font-family:'Caveat',cursive;font-size:10px;font-weight:700;letter-spacing:0.2em;color:var(--ink-muted);display:block;margin-top:8px;text-transform:uppercase;font-style:normal;}
+
+/* Gods involved */
+.gods-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:2rem;}
+.god-tag{font-family:'Caveat',cursive;font-size:12px;font-weight:700;letter-spacing:0.08em;padding:4px 12px;border:1px solid rgba(42,245,224,0.2);color:var(--ink-white);opacity:0.8;display:flex;align-items:center;gap:6px;}
+.god-tag .glyph{font-size:14px;}
+
+/* Decrees */
+.decrees{display:flex;flex-direction:column;gap:1.5rem;}
+.decree-card{background:var(--paper-mid);border:1.5px solid rgba(42,245,224,0.08);border-top:2px solid;padding:1.75rem;position:relative;}
+.arc.oresteia .decree-card{border-top-color:var(--ink-magenta-dim);}
+.arc.bacchae .decree-card{border-top-color:var(--ink-cyan-dim);}
+.arc.cassandra .decree-card{border-top-color:var(--ink-amber-dim);}
+.decree-week{font-family:'Caveat',cursive;font-size:10px;font-weight:700;letter-spacing:0.3em;color:var(--ink-muted);text-transform:uppercase;margin-bottom:0.4rem;}
+.decree-god{font-family:'Caveat',cursive;font-size:12px;font-weight:700;letter-spacing:0.1em;margin-bottom:0.4rem;}
+.arc.oresteia .decree-god{color:var(--ink-magenta);}
+.arc.bacchae .decree-god{color:var(--ink-cyan);}
+.arc.cassandra .decree-god{color:var(--ink-amber);}
+.decree-title{font-family:'Permanent Marker',cursive;font-size:1.3rem;color:var(--ink-white);margin-bottom:0.75rem;line-height:1.1;transform:rotate(-0.3deg);display:inline-block;}
+.decree-body{font-size:0.92rem;color:var(--ink-white);opacity:0.75;line-height:1.85;margin-bottom:1.25rem;font-family:'Special Elite',serif;}
+.decree-question{background:rgba(232,32,58,0.05);border-left:2px solid var(--ink-magenta-dim);padding:1rem 1.1rem;font-size:0.9rem;color:var(--ink-white);opacity:0.85;line-height:1.75;font-style:italic;font-family:'Special Elite',serif;margin-bottom:1rem;}
+.arc.bacchae .decree-question{background:rgba(42,245,224,0.04);border-left-color:var(--ink-cyan-dim);}
+.arc.cassandra .decree-question{background:rgba(232,160,32,0.05);border-left-color:var(--ink-amber-dim);}
+.decree-choices{display:flex;flex-direction:column;gap:5px;margin-bottom:1rem;}
+.choice-row{display:flex;gap:0.75rem;font-size:0.87rem;color:var(--ink-white);opacity:0.7;align-items:baseline;font-family:'Special Elite',serif;line-height:1.55;}
+.choice-letter{font-family:'Permanent Marker',cursive;font-size:12px;color:var(--ink-magenta);flex-shrink:0;min-width:14px;}
+.arc.bacchae .choice-letter{color:var(--ink-cyan);}
+.arc.cassandra .choice-letter{color:var(--ink-amber);}
+.decree-myth-echo{font-family:'Caveat',cursive;font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--ink-muted);border-top:1px solid rgba(42,245,224,0.08);padding-top:0.75rem;margin-top:0.75rem;line-height:1.6;}
+.decree-myth-echo em{color:var(--ink-muted);font-style:italic;}
+
+/* Section dividers */
+.section-div{max-width:860px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;gap:1rem;}
+.section-div-label{font-family:'Caveat',cursive;font-size:12px;font-weight:700;letter-spacing:0.2em;color:var(--ink-magenta);white-space:nowrap;transform:rotate(-0.4deg);display:inline-block;text-transform:uppercase;}
+
+/* Season notes */
+.notes{max-width:860px;margin:0 auto;padding:4rem 2rem 6rem;}
+.notes-title{font-family:'Permanent Marker',cursive;font-size:clamp(1.5rem,4vw,2.5rem);color:var(--ink-white);margin-bottom:0.2em;transform:rotate(-0.4deg);display:inline-block;animation:inkBleed 8s ease-in-out infinite;filter:url(#roughen);}
+.notes-sub{font-family:'Caveat',cursive;font-size:12px;font-weight:700;letter-spacing:0.2em;color:var(--ink-muted);text-transform:uppercase;margin-bottom:2rem;}
+.note-block{margin-bottom:2rem;}
+.note-heading{font-family:'Caveat',cursive;font-size:11px;font-weight:700;letter-spacing:0.3em;color:var(--ink-magenta);text-transform:uppercase;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.75rem;}
+.note-heading::after{content:'';flex:1;height:1px;background:var(--ink-magenta-dim);opacity:0.3;}
+.note-body{font-size:0.92rem;color:var(--ink-white);opacity:0.72;line-height:1.9;font-family:'Special Elite',serif;}
+.note-body p+p{margin-top:1em;}
+
+@media(max-width:600px){.tl-grid{grid-template-columns:repeat(3,1fr);}.cover-meta{gap:1.5rem;}}
+</style>
+</head>
+<body>
+
+<svg class="filters" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="roughen" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ══ COVER ══ -->
+<section class="cover">
+  <span class="cover-season">The Fates App · Season One</span>
+  <h1 class="cover-title">The Age of<br><span class="ink">Old Wounds</span></h1>
+  <p class="cover-subtitle">Six weeks · Three tragedies · No survivors</p>
+  <svg class="cover-rule" viewBox="0 0 480 12" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M2,6 C40,4 80,8 120,5 C180,2 230,9 290,6 C340,3 390,8 450,5 C462,4 474,7 478,6" stroke="#e8203a" stroke-width="1.8" fill="none" stroke-linecap="round" filter="url(#roughen)" opacity="0.6"/>
+    <path d="M2,9 C60,8 120,11 180,9 C240,7 300,11 360,9 C410,7 450,10 478,9" stroke="#2af5e0" stroke-width="0.8" fill="none" stroke-linecap="round" filter="url(#roughen)" opacity="0.35"/>
+  </svg>
+  <p class="cover-intro">The tragedies were never stories about people who did wrong. They were stories about people who could not stop themselves from doing what they were. Season One is not a game about the future. It is a game about patterns so old they have become fate — and whether you can see them coming before they arrive.</p>
+  <div class="cover-meta">
+    <div class="meta-item"><span class="meta-num">6</span><span class="meta-label">Weeks</span></div>
+    <div class="meta-item"><span class="meta-num">3</span><span class="meta-label">Tragedies</span></div>
+    <div class="meta-item"><span class="meta-num">6</span><span class="meta-label">Decrees</span></div>
+    <div class="meta-item"><span class="meta-num">8</span><span class="meta-label">Gods</span></div>
+  </div>
+</section>
+
+<!-- ══ TIMELINE ══ -->
+<div class="timeline-wrap reveal">
+  <p class="tl-heading">// Season one — six week structure</p>
+  <div class="tl-grid">
+    <div class="tl-week arc-1">
+      <span class="tl-week-num">W1</span>
+      <span class="tl-week-arc">The Oresteia</span>
+      <span class="tl-week-title">The Asset Moves</span>
+    </div>
+    <div class="tl-week arc-1">
+      <span class="tl-week-num">W2</span>
+      <span class="tl-week-arc">The Oresteia</span>
+      <span class="tl-week-title">The Blow Falls</span>
+    </div>
+    <div class="tl-week arc-2">
+      <span class="tl-week-num">W3</span>
+      <span class="tl-week-arc">The Bacchae</span>
+      <span class="tl-week-title">The Gate Locked</span>
+    </div>
+    <div class="tl-week arc-2">
+      <span class="tl-week-num">W4</span>
+      <span class="tl-week-arc">The Bacchae</span>
+      <span class="tl-week-title">What the God Does</span>
+    </div>
+    <div class="tl-week arc-3">
+      <span class="tl-week-num">W5</span>
+      <span class="tl-week-arc">Cassandra</span>
+      <span class="tl-week-title">The File Opens</span>
+    </div>
+    <div class="tl-week arc-3">
+      <span class="tl-week-num">W6</span>
+      <span class="tl-week-arc">Cassandra</span>
+      <span class="tl-week-title">The Truth Lands</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     ARC ONE — THE ORESTEIA
+     ══════════════════════════════════════ -->
+<div class="section-div reveal">
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+  <span class="section-div-label">Arc One · Weeks 1–2</span>
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+</div>
+
+<div class="arc oresteia reveal">
+  <div class="arc-header">
+    <div class="arc-eyebrow">Arc One · The Oresteia</div>
+    <h2 class="arc-title">The House<br>of Zeus</h2>
+    <p class="arc-subtitle">After Aeschylus — the trilogy that invented justice and could not stop the killing</p>
+    <span class="arc-source">Source · The Oresteia, Aeschylus (458 BC)</span>
+  </div>
+
+  <p class="arc-premise">The Oresteia is about what happens when a house becomes a machine for destroying itself — and whether justice, once finally invented, can stop the cycle or only rename it. Agamemnon sacrificed his daughter for a war. His wife Clytemnestra waited ten years and killed him when he returned. Her son Orestes killed her in return. The Furies pursued him until Athena intervened and created the first court of law. The tragedy ends with justice — but everyone is already dead.</p>
+
+  <div class="arc-myth">"He who acts must suffer. That is ancient law." — The Oresteia is the story of a family in which every act of violence is simultaneously revenge for the last one, and cause of the next. The cycle only ends when Athena replaces vengeance with judgement — and even then, the Furies do not disappear. They become the Kindly Ones. They are still there.<span class="arc-myth-source">Aeschylus, Agamemnon, c. 458 BC</span></div>
+
+  <div class="gods-row">
+    <div class="god-tag"><span class="glyph">👑</span> Hera — Clytemnestra</div>
+    <div class="god-tag"><span class="glyph">⚡</span> Zeus — Agamemnon</div>
+    <div class="god-tag"><span class="glyph">🦉</span> Athena — The Arbiter</div>
+    <div class="god-tag"><span class="glyph">🌾</span> Demeter — The Fury</div>
+  </div>
+
+  <div class="decrees">
+
+    <!-- DECREE 1 -->
+    <div class="decree-card">
+      <div class="decree-week">Week One · Decree I of II</div>
+      <div class="decree-god">👑 Hera · The Bound Queen</div>
+      <div class="decree-title">The Asset Moves</div>
+      <div class="decree-body">
+        <p>Hera has been moving things for months — quietly, the way water moves before a flood. Not dramatically. Not visibly. A foundation endowment restructured here. A political relationship quietly transferred there. Something is being prepared. The question is not whether she will act. The question is when she has decided the moment has arrived.</p>
+        <p>This week, a financial instrument tied to Zeus's primary infrastructure has been transferred — legally, cleanly, with full documentation — into a structure Hera controls. Zeus's advisors have flagged it. Zeus has not yet responded. Clytemnestra also waited. She was very patient about the weapon.</p>
+      </div>
+      <div class="decree-question">"The transfer has been registered. Zeus's team has been informed. Hera has not issued a statement. She has not taken a call. The Olympian Foundation's lawyers are available but have not been asked to speak. What is Hera doing right now?"</div>
+      <div class="decree-choices">
+        <div class="choice-row"><span class="choice-letter">A</span><span>Waiting. The transfer is only the first move. She is watching how Zeus responds before she decides on the second.</span></div>
+        <div class="choice-row"><span class="choice-letter">B</span><span>Already gone. The transfer was the distraction. The real move happened somewhere else while everyone was looking at this.</span></div>
+        <div class="choice-row"><span class="choice-letter">C</span><span>Negotiating, through an intermediary Zeus doesn't know she has access to. She wants a settlement, not a war.</span></div>
+        <div class="choice-row"><span class="choice-letter">D</span><span>Nothing. The transfer is not the weapon. She is simply making sure the weapon is in the right room before she uses it.</span></div>
+      </div>
+      <div class="decree-myth-echo">Myth echo — <em>Clytemnestra did not act on the night Agamemnon returned out of rage. She had prepared the bath, the robe, the axe. The waiting was the most deliberate part.</em></div>
+    </div>
+
+    <!-- DECREE 2 -->
+    <div class="decree-card">
+      <div class="decree-week">Week Two · Decree II of II</div>
+      <div class="decree-god">⚡ Zeus · The Thunderer &nbsp;&amp;&nbsp; 🦉 Athena · The Undefeated</div>
+      <div class="decree-title">The Blow Falls</div>
+      <div class="decree-body">
+        <p>Hera has acted. The details are still emerging — what is clear is that something Zeus believed was structurally his is no longer his, that the mechanism by which this happened was entirely legal, and that Hera prepared it for longer than anyone outside her circle knew. The house is not burning. But it is no longer his house in the way it was yesterday.</p>
+        <p>Zeus is responding. What he does in the next 72 hours will define the rest of the season. Athena, who has said nothing publicly, is in a position she did not choose — the Olympian Foundation funds research she depends on. She cannot appear neutral. Neutrality is a position. In the Oresteia, Athena broke the deadlock with a vote. Her vote went to Orestes. She has always chosen the future over the past.</p>
+      </div>
+      <div class="decree-question">"The blow has landed. Zeus is responding. Athena has been asked, publicly, to declare her position on the dispute between the two institutions she serves. She has 48 hours before her silence becomes its own statement. What does the goddess of strategy do when the house goes to war with itself?"</div>
+      <div class="decree-choices">
+        <div class="choice-row"><span class="choice-letter">A</span><span>Issues a statement of carefully worded neutrality that positions her as the future arbiter — she will not take a side now, but she is making clear she will decide the outcome.</span></div>
+        <div class="choice-row"><span class="choice-letter">B</span><span>Sides with Zeus — publicly, unambiguously, because the alternative is losing the infrastructure she needs to finish what she's building.</span></div>
+        <div class="choice-row"><span class="choice-letter">C</span><span>Sides with Hera — not publicly, but in a way that will become clear in retrospect. She has already chosen. She is simply not announcing it yet.</span></div>
+        <div class="choice-row"><span class="choice-letter">D</span><span>Proposes a third structure. Neither Zeus nor Hera. Something new. She has been building it for months. This is the moment she needed to justify it.</span></div>
+      </div>
+      <div class="decree-myth-echo">Myth echo — <em>When Athena cast the deciding vote for Orestes, she said: "I honour the male in all things." She was not being simple. She was choosing the future of law over the past of blood. The Furies became the Kindly Ones. The cycle ended. The cost was that Clytemnestra's justice was not delivered. Athena has made this calculation before.</em></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     ARC TWO — THE BACCHAE
+     ══════════════════════════════════════ -->
+<div class="section-div reveal">
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+  <span class="section-div-label" style="color:var(--ink-cyan);">Arc Two · Weeks 3–4</span>
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+</div>
+
+<div class="arc bacchae reveal">
+  <div class="arc-header">
+    <div class="arc-eyebrow">Arc Two · The Bacchae</div>
+    <h2 class="arc-title">What Was<br><span style="color:var(--ink-cyan);">Refused</span></h2>
+    <p class="arc-subtitle">After Euripides — the god who could not be dismissed, and the king who tried</p>
+    <span class="arc-source">Source · The Bacchae, Euripides (405 BC)</span>
+  </div>
+
+  <p class="arc-premise">The Bacchae is Euripides's last play, written in exile, completed just before his death. It is the most dangerous of the tragedies because it has no villain. Pentheus, King of Thebes, is not a tyrant — he is a rationalist. He refuses to acknowledge Dionysus because he cannot see what Dionysus represents. He locks up the god. He goes to spy on the Maenads in disguise. His mother tears him apart with her bare hands, in a divine ecstasy she did not choose, and carries his head back to Thebes believing it is a lion's. The god did not send the madness. The madness was already there. Dionysus simply removed the lid.</p>
+
+  <div class="arc-myth">"The god is laughter and he is terror. He is the vine and he is what the vine releases. You cannot lock him up. You cannot dismiss him. You can only refuse him — and refusal, in the end, is the thing that invites him in." <span class="arc-myth-source">Euripides, The Bacchae, c. 405 BC</span></div>
+
+  <div class="gods-row">
+    <div class="god-tag"><span class="glyph">🍷</span> Dionysus — The Twice-Born</div>
+    <div class="god-tag"><span class="glyph">⚡</span> Zeus — Pentheus (the one who refuses)</div>
+    <div class="god-tag"><span class="glyph">🌾</span> Demeter — Agave (the one who cannot see)</div>
+  </div>
+
+  <div class="decrees">
+
+    <!-- DECREE 3 -->
+    <div class="decree-card">
+      <div class="decree-week">Week Three · Decree I of II</div>
+      <div class="decree-god">🍷 Dionysus · The Twice-Born</div>
+      <div class="decree-title">The Gate Locked</div>
+      <div class="decree-body">
+        <p>Dionysus has been sober for eight months. No one in the Pantheon knows what this means. What has become clear, in the silence, is that he has been watching — specifically watching a coalition of institutions that have been quietly working to have the Thyrsus Group's pharmaceutical research arm shut down, its festival licences reviewed, and its cultural influence characterised as destabilising. They have done this legally, carefully, with the full apparatus of institutional process.</p>
+        <p>They have also, in doing so, refused to acknowledge him. Not tactically — genuinely. They do not believe he matters. Pentheus did not believe either. He was the last rational man in Thebes. He was completely correct about everything and he was wrong about the one thing that mattered.</p>
+      </div>
+      <div class="decree-question">"The coalition has published its report. It recommends dissolution of the Thyrsus pharmaceutical arm and a five-year review of its festival licences. The language is clinical, institutional, dismissive. Dionysus has read it. He is sober. He has not responded. What does the twice-born god do when he is refused — not out of fear, but out of genuine, considered disregard?"</div>
+      <div class="decree-choices">
+        <div class="choice-row"><span class="choice-letter">A</span><span>Nothing visible. He lets the coalition proceed. He is waiting for them to overcommit — to go further than their mandate allows — and then he will be there when they do.</span></div>
+        <div class="choice-row"><span class="choice-letter">B</span><span>Sends something inside the coalition. Not a person — an idea, a product, something that will work on them from within without their awareness.</span></div>
+        <div class="choice-row"><span class="choice-letter">C</span><span>Goes public in a way the coalition cannot categorise or dismiss — not a statement, not a press release, something that cannot be processed by institutional language at all.</span></div>
+        <div class="choice-row"><span class="choice-letter">D</span><span>Appears in person. At the coalition's next meeting. Without being invited. Without a lawyer. With his followers behind him. He lets them decide what to do with that.</span></div>
+      </div>
+      <div class="decree-myth-echo">Myth echo — <em>When Pentheus imprisoned Dionysus, the chains fell off. The prison walls cracked. The god stood in the courtyard, patient and completely free, and asked: "Do you want to try that again?" He was not angry. Anger would have been simpler.</em></div>
+    </div>
+
+    <!-- DECREE 4 -->
+    <div class="decree-card">
+      <div class="decree-week">Week Four · Decree II of II</div>
+      <div class="decree-god">🍷 Dionysus · The Twice-Born &nbsp;&amp;&nbsp; ⚡ Zeus · The Thunderer</div>
+      <div class="decree-title">What the God Does</div>
+      <div class="decree-body">
+        <p>The coalition's lead figure — the one who wrote the dismissive language, the one who genuinely, consciously refused to acknowledge that Dionysus was a force that needed to be negotiated with rather than processed — has found themselves inside something they do not understand. It is not dramatic. It does not look like divine retribution. It looks like three decisions they made freely, each of which made sense at the time, that have converged into a position from which there is no clean exit.</p>
+        <p>Dionysus did not engineer this. He simply removed something that had been holding it in place. Zeus, watching, has to decide: does he intervene on behalf of the institution that has now lost its most credible voice — or does he let the coalition fail, knowing that Dionysus will remember which way he moved?</p>
+      </div>
+      <div class="decree-question">"The coalition's lead figure has made an error that has become public — not a scandal, but an exposure of the exact kind of rigidity and blindness that Dionysus's report described as the coalition's primary flaw. Zeus has been asked by three separate parties to comment. Dionysus has said nothing. What does Zeus do?"</div>
+      <div class="decree-choices">
+        <div class="choice-row"><span class="choice-letter">A</span><span>Defends the coalition. They are an institution. He defends institutions. He is not going to let Dionysus reframe this as a victory.</span></div>
+        <div class="choice-row"><span class="choice-letter">B</span><span>Says nothing. Distances himself from the coalition without explicitly withdrawing support. Lets it die quietly.</span></div>
+        <div class="choice-row"><span class="choice-letter">C</span><span>Contacts Dionysus directly — privately — for the first time in years. Offers something. He is not sure what yet. He needs to know what Dionysus wants.</span></div>
+        <div class="choice-row"><span class="choice-letter">D</span><span>Attacks the coalition himself. Frames it as his decision, his critique — takes ownership of the dismantling before Dionysus can. He will not be seen to have lost.</span></div>
+      </div>
+      <div class="decree-myth-echo">Myth echo — <em>At the end of The Bacchae, after Agave has returned to herself and seen what she is holding, Dionysus speaks the epilogue. He does not gloat. He explains, calmly, that he warned them. He says: "I am a god. I was dishonoured among you." Then he leaves. He does not need to stay for the aftermath. The aftermath is sufficient.</em></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     ARC THREE — CASSANDRA
+     ══════════════════════════════════════ -->
+<div class="section-div reveal">
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+  <span class="section-div-label" style="color:var(--ink-amber);">Arc Three · Weeks 5–6</span>
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+</div>
+
+<div class="arc cassandra reveal">
+  <div class="arc-header">
+    <div class="arc-eyebrow">Arc Three · Cassandra</div>
+    <h2 class="arc-title">The One<br><span style="color:var(--ink-amber);">Who Knew</span></h2>
+    <p class="arc-subtitle">After the myth — the prophet who was right about everything and believed by no one</p>
+    <span class="arc-source">Source · The Cassandra myth, embedded in the Oresteia & Trojan Cycle</span>
+  </div>
+
+  <p class="arc-premise">Cassandra was given the gift of prophecy by Apollo, who loved her. When she refused him, he cursed her: she would always tell the truth, and never be believed. She told Troy the horse was dangerous. She told them Agamemnon would be killed when he returned. She was correct. She was ignored. She was killed in Agamemnon's bath alongside him, still telling the truth to no one who could hear it. The Cassandra myth is not about prophecy. It is about the specific torture of being right and being unable to make it matter.</p>
+
+  <div class="arc-myth">"No one believed her. Not because she was wrong — she was never wrong. But Apollo had arranged it so that the truth, in her mouth, sounded like madness. This is the cruelest of all possible punishments: not to be silenced, but to be heard and disbelieved, forever, at full volume." <span class="arc-myth-source">The Cassandra myth, Trojan Cycle &amp; Aeschylus, Agamemnon</span></div>
+
+  <div class="gods-row">
+    <div class="god-tag"><span class="glyph">🌙</span> Artemis — Cassandra (the one who knows)</div>
+    <div class="god-tag"><span class="glyph">☀️</span> Apollo — Apollo (the one who cursed her)</div>
+    <div class="god-tag"><span class="glyph">🪶</span> Hermes — The messenger between them</div>
+  </div>
+
+  <div class="decrees">
+
+    <!-- DECREE 5 -->
+    <div class="decree-card">
+      <div class="decree-week">Week Five · Decree I of II</div>
+      <div class="decree-god">🌙 Artemis · The Untamed</div>
+      <div class="decree-title">The File Opens</div>
+      <div class="decree-body">
+        <p>Artemis has had the file for three years. It contains documentation of something Apollo did — not an allegation, not a rumour, but primary evidence: records, communications, testimony from a party who came to the Lunar Institute specifically because they trusted Artemis to know what to do with it. She has verified it. She has had it verified by two independent sources she trusts. She is certain.</p>
+        <p>She has not published it. She has been deciding. Not out of fear — out of the knowledge that the moment she releases it, it will become a media event, Apollo will reframe it, and the truth will be processed through his machinery until it no longer resembles itself. Cassandra was never silenced. She was simply made to sound like noise.</p>
+      </div>
+      <div class="decree-question">"A source close to Apollo has become aware that the Lunar Institute holds documentation concerning him. They have not said this publicly. Apollo has not responded. But Artemis knows — through Hermes, who knows everything — that Apollo is now aware the file exists. She has perhaps 72 hours before he moves to preempt it. What does Artemis do?"</div>
+      <div class="decree-choices">
+        <div class="choice-row"><span class="choice-letter">A</span><span>Publishes immediately. On her terms, in her framing, before Apollo can prepare a response. The advantage of surprise is worth the loss of preparation time.</span></div>
+        <div class="choice-row"><span class="choice-letter">B</span><span>Contacts Apollo directly — not to negotiate, but to give him the chance to respond before publication. She will publish either way. She wants the record to show she offered him the opportunity.</span></div>
+        <div class="choice-row"><span class="choice-letter">C</span><span>Does nothing. Lets Apollo move first. She wants to see what he does when he thinks the file might be used — what he is willing to do to prevent it — before she decides how to use it.</span></div>
+        <div class="choice-row"><span class="choice-letter">D</span><span>Gives the file to Hermes. Not to publish — to hold. She needs it somewhere Apollo cannot reach it. Hermes can cross any threshold. The file will be safe. She is not sure what Hermes will do with it, but she trusts him more than she trusts the system.</span></div>
+      </div>
+      <div class="decree-myth-echo">Myth echo — <em>Cassandra told the truth at full volume for years. It made no difference. What Artemis has that Cassandra did not is the ability to choose when to speak — and a twin who arranged her silence, and who therefore knows exactly what the silence cost.</em></div>
+    </div>
+
+    <!-- DECREE 6 -->
+    <div class="decree-card">
+      <div class="decree-week">Week Six · Decree II of II · Season Finale</div>
+      <div class="decree-god">☀️ Apollo · The Bright One &nbsp;&amp;&nbsp; 🌙 Artemis · The Untamed</div>
+      <div class="decree-title">The Truth Lands</div>
+      <div class="decree-body">
+        <p>The file is public. However it left the Lunar Institute — whether Artemis released it, whether Apollo preempted it and released his own version, whether Hermes moved it in a direction no one expected — the content is now in the world. The truth has landed. What matters now is what it does when it arrives.</p>
+        <p>Apollo is the god of the sun, of light, of the thing that illuminates. He is also the god who arranged for Cassandra to be disbelieved — which means he understands better than anyone how truth can be shaped, framed, softened, recontextualised until it is technically present and functionally harmless. He has done this before. He is very good at it. The question is whether Artemis, who spent three years preparing for this moment, prepared for that too.</p>
+      </div>
+      <div class="decree-question">"The file is public. Apollo has had twelve hours with it. He has issued a statement. The statement is precise, measured, and devastatingly effective at reframing the content of the file as a misunderstanding, a context problem, a thing that looks different when seen from the correct angle. Most people who read it will find it plausible. Artemis is watching this happen. What does she do?"</div>
+      <div class="decree-choices">
+        <div class="choice-row"><span class="choice-letter">A</span><span>Releases the second file. She always knew he would do this. She held something back. The second document does not permit reframing.</span></div>
+        <div class="choice-row"><span class="choice-letter">B</span><span>Says nothing. Lets the original file stand without commentary. She knows that Apollo's reframing will unravel on its own when people look closely enough. She refuses to enter his arena.</span></div>
+        <div class="choice-row"><span class="choice-letter">C</span><span>Publishes her methodology — every step of how she verified the file, every source, every date. She cannot out-argue Apollo. She can make the process itself the argument.</span></div>
+        <div class="choice-row"><span class="choice-letter">D</span><span>Calls Hermes. She does not know exactly what Hermes has been doing with the information for the past three years, but she knows it is not nothing. She asks him to show her what he has.</span></div>
+      </div>
+      <div class="decree-myth-echo">Myth echo — <em>At the end of the Cassandra myth, she is dead and she was right. This is the ending the tragedy offers. Artemis has spent three years trying to find the version where being right is sufficient. Season One ends without resolving whether she has. That is what Season Two is for.</em></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══ SEASON NOTES ══ -->
+<div class="section-div reveal">
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+  <span class="section-div-label">Season Notes</span>
+  <svg viewBox="0 0 300 10" style="flex:1;height:10px;" xmlns="http://www.w3.org/2000/svg"><path d="M0,5 C30,3 80,7 150,5 C220,3 270,7 300,5" stroke="#6b0f1a" stroke-width="1.2" fill="none" filter="url(#roughen)"/></svg>
+</div>
+
+<div class="notes">
+  <h2 class="notes-title reveal">Director's Notes</h2>
+  <p class="notes-sub reveal">// For the oracle's eyes only</p>
+
+  <div class="note-block reveal">
+    <div class="note-heading">The design principle</div>
+    <div class="note-body">
+      <p>Each arc uses a Greek tragedy as a structural template, not a plot. The tragedy tells you how the story ends — which means players who know the myth have an interpretive advantage over players who don't. A player who knows The Bacchae knows that the institution that refuses Dionysus does not survive the refusal. This is not cheating. It is the game rewarding knowledge of the source material.</p>
+      <p>Players who don't know the myths will feel the shape of something older underneath the modern story — a sense that events are moving toward something inevitable — without being able to name it. This is exactly how the tragedies work on audiences who encounter them fresh. The inevitability is the point.</p>
+    </div>
+  </div>
+
+  <div class="note-block reveal">
+    <div class="note-heading">How arcs interact</div>
+    <div class="note-body">
+      <p>The three arcs are not isolated. They share gods, and those gods' behaviour in one arc affects the context of another. Athena's decision in Week Two — which side she takes in the Hera-Zeus dispute — changes the Oracle Insight available to subscribers in the Cassandra arc. If she sided with Zeus, her institutional loyalty is a factor in how she processes the Apollo file. If she sided with Hera, she may be quietly allied with Artemis already.</p>
+      <p>Hermes appears in all three arcs as a connective thread. He knows what Hera moved. He was present when the Bacchae coalition's private communications were — through channels he declines to specify — made available to parties who found them useful. He has had the Apollo file, or a version of it, for longer than Artemis knows. He is the only character who can see all three stories at once, which makes him the most dangerous and the most unpredictable.</p>
+    </div>
+  </div>
+
+  <div class="note-block reveal">
+    <div class="note-heading">What Season One does not resolve</div>
+    <div class="note-body">
+      <p>The Oresteia ends with the invention of justice — but Clytemnestra's justice is not delivered. Hera acts. The consequences of that action extend into Season Two. Whether Zeus survives them, and in what form, is the question Season Two opens with.</p>
+      <p>The Bacchae ends with the god departing and the wreckage remaining. Dionysus does not stay to watch. Season One ends with his position in the Pantheon irrevocably changed — either as the god who dismantled an institution that tried to dismiss him, or the god who was dismissed and did nothing, depending on how players predicted. What he does next, now that he has proved or failed to prove his point, is Season Two's question for him.</p>
+      <p>The Cassandra arc deliberately does not resolve. The truth has landed. Whether it mattered is unanswered. Apollo's reframing may hold. Artemis may have a second file. Hermes may have moved something that neither of them knows about yet. Season Two opens with three players who all believe they won and one of them is wrong.</p>
+    </div>
+  </div>
+
+  <div class="note-block reveal">
+    <div class="note-heading">Tragedies for Season Two</div>
+    <div class="note-body">
+      <p>The shortlist, in rough order of fit: Medea (Demeter and Persephone — the mother who will destroy everything rather than lose her child, the child who chose to leave anyway). Prometheus Bound (Hephaestus — the one who was asked to chain the maker who gave fire to mortals; the one who built the chains and has never forgiven himself for it). The Odyssey is not a tragedy but contains one: Poseidon's pursuit, ten years of a grudge that outlasted its justification. Ajax — the hero who was right that he was owed something, and was destroyed by the certainty of it. For Zeus specifically: the myth of Kronos, which is the story Zeus has been trying to escape since the beginning. The son who surpasses the father. The prophecy he has been afraid of since before the Pantheon existed.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 60);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.07 });
+reveals.forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
