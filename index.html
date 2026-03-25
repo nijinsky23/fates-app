@@ -995,6 +995,7 @@ footer {
   }
 
   // Email signup
+
   function handleSignup() {
     const email = document.getElementById('emailInput').value;
     const msg = document.getElementById('signup-msg');
@@ -1003,6 +1004,11 @@ footer {
       msg.style.color = 'var(--ink-magenta)';
       return;
     }
+    fetch('YOUR_MAILCHIMP_URL_HERE', {
+      method: 'POST',
+      mode: 'no-cors',
+      body: new URLSearchParams({ EMAIL: email })
+    });
     msg.textContent = '✦ Your fate is sealed. The Fates will be in touch. ✦';
     msg.style.color = 'var(--ink-cyan)';
     document.getElementById('emailInput').value = '';
