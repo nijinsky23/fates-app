@@ -994,8 +994,7 @@ footer {
     btn.classList.add('selected');
   }
 
-  // Email signup
-
+// Email signup
   function handleSignup() {
     const email = document.getElementById('emailInput').value;
     const msg = document.getElementById('signup-msg');
@@ -1004,11 +1003,19 @@ footer {
       msg.style.color = 'var(--ink-magenta)';
       return;
     }
-    fetch('https://thefatesapp.us1.list-manage.com/subscribe/post?u=74c34d14e87cabba39c2a03c1&id=0693c6d16d&f_id=00d2c3e1f0', {
-      method: 'POST',
-      mode: 'no-cors',
-      body: new URLSearchParams({ EMAIL: email })
-    });
+    const form = document.createElement('form');
+    form.action = 'https://thefatesapp.us1.list-manage.com/subscribe/post?u=74c34d14e87cabba39c2a03c1&id=0693c6d16d&f_id=00d2c3e1f0';
+    form.method = 'POST';
+    form.target = '_blank';
+    form.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'email';
+    input.name = 'EMAIL';
+    input.value = email;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
     msg.textContent = '✦ Your fate is sealed. The Fates will be in touch. ✦';
     msg.style.color = 'var(--ink-cyan)';
     document.getElementById('emailInput').value = '';
